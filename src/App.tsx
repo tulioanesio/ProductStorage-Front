@@ -4,10 +4,10 @@ import "./index.css";
 
 import Dashboard from "./pages/dashboard";
 import Produto from "./pages/produto";
-import Categoria from "./pages/categoria";
 import Movimentacao from "./pages/movimentacao";
 import Relatorio from "./pages/relatorio";
 import MainLayout from "./layouts/MainLayout";
+import { Categoria } from "./pages/categoria";
 
 function App() {
   return (

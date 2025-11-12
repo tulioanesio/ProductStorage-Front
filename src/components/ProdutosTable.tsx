@@ -12,7 +12,7 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table"
-import { ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -221,6 +221,7 @@ export function ProdutosTable() {
             onClick={() => setPage((p) => Math.max(p - 1, 0))}
             disabled={data?.first}
           >
+            <ArrowLeft size={24} />
             Anterior
           </Button>
           <Button
@@ -229,6 +230,7 @@ export function ProdutosTable() {
             onClick={() => setPage((p) => p + 1)}
             disabled={data?.last}
           >
+            <ArrowRight size={24} />
             Próxima
           </Button>
         </div>
