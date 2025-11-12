@@ -7,7 +7,7 @@ import Produto from "./pages/produto";
 import Movimentacao from "./pages/movimentacao";
 import Relatorio from "./pages/relatorio";
 import MainLayout from "./layouts/MainLayout";
-import { Categoria } from "./pages/categoria";
+import { CategoriaPage } from "./pages/categoria";
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/produtos" element={<Produto />} />
-          <Route path="/categorias" element={<Categoria />} />
+          <Route path="/categorias" element={<CategoriaPage />} />
           <Route path="/movimentacoes" element={<Movimentacao />} />
           <Route path="/relatorios" element={<Relatorio />} />
         </Route>

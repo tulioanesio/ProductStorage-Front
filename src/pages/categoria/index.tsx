@@ -13,7 +13,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 const data: Payment[] = [
   {
@@ -151,7 +152,8 @@ export const columns: ColumnDef<Payment>[] = [
   },
 ]
 
-export function Categoria() {
+export function CategoriaPage() {
+  const [open, setOpen] = React.useState(false)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -182,8 +184,30 @@ export function Categoria() {
   return (
     <div className="w-full">
       <div className="pb-8">
-        <h2 className="text-2xl font-semibold mb-1">Categorias</h2>
-        <p className="text-gray-500">Gerencie todas as categorias do estoque</p>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold mb-1">Categorias</h2>
+            <p className="text-gray-500">Gerencie todas as categorias do estoque</p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar categoria
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nova categoria</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-3">
+                <Input placeholder="Nome da categoria" />
+                <Input placeholder="Tamanho" />
+                <Input placeholder="Embalagem" />
+                <Button onClick={() => setOpen(false)}>Salvar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       <div className="flex items-center py-4">
         <Input
@@ -297,6 +321,6 @@ export function Categoria() {
           </Button>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
