@@ -13,7 +13,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -183,7 +183,7 @@ export function CategoriaPage() {
 
   return (
     <div className="w-full">
-      <div className="pb-8">
+      <div>
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-2xl font-semibold mb-1">Categorias</h2>
@@ -221,7 +221,7 @@ export function CategoriaPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Exibição de colunas <ChevronDown />
+              Exibição das colunas <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
