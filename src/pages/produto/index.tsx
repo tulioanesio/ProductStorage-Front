@@ -1,5 +1,3 @@
-"use client"
-
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +15,7 @@ export default function ProdutosPage() {
     const [open, setOpen] = useState(false)
 
     return (
-        <div className="w-full p-6">
+        <div className="w-full">
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <h2 className="text-2xl font-semibold mb-1">Produtos</h2>
