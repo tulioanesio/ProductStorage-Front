@@ -5,6 +5,7 @@ import {
   RefreshCcw,
   BarChart3,
   LayoutDashboard,
+  Boxes,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -21,7 +22,8 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-white border-r shadow-sm hidden md:flex flex-col">
       <div className="p-6 border-b">
-        <Link to="/">
+        <Link to="/" className="flex items-center gap-4">
+          <Boxes size={48} className="text-blue-600" />
           <h1 className="text-xl font-semibold text-blue-600">Gestor de Estoque</h1>
         </Link>
       </div>
@@ -31,8 +33,8 @@ export default function Sidebar() {
           <Link key={path} to={path}>
             <button
               className={`w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg mb-2 transition cursor-pointer ${location.pathname === path
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "hover:bg-gray-100 text-gray-700"
+                ? "bg-blue-50 text-blue-700 font-medium"
+                : "hover:bg-gray-100 text-gray-700"
                 }`}
             >
               {icon}
