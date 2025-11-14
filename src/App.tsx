@@ -1,13 +1,12 @@
-// src/App.tsx
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./index.css";
 
 import Dashboard from "./pages/dashboard";
 import Produto from "./pages/produto";
-import Movimentacao from "./pages/movimentacao";
 import Relatorio from "./pages/relatorio";
 import MainLayout from "./layouts/MainLayout";
 import { CategoriaPage } from "./pages/categoria";
+import { MovementPage } from "./pages/movimentacao";
 
 function App() {
   return (
@@ -17,7 +16,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/produtos" element={<Produto />} />
           <Route path="/categorias" element={<CategoriaPage />} />
-          <Route path="/movimentacoes" element={<Movimentacao />} />
+          <Route path="/movimentacoes" element={<MovementPage />} />
           <Route path="/relatorios" element={<Relatorio />} />
         </Route>
       </Routes>

@@ -11,7 +11,7 @@ export default function Footer() {
       href="https://github.com/tulioanesio/ProductStorage-Front"
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-blue-600 hover:underline"
+      className="flex items-center gap-2 text-slate-600 hover:underline"
      >
       <Github className="w-4 h-4" />
       <span className="text-sm">Frontend</span>
@@ -20,7 +20,7 @@ export default function Footer() {
       href="https://github.com/tulioanesio/ProductStorage-Back"
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-blue-600 hover:underline"
+      className="flex items-center gap-2 text-slate-600 hover:underline"
      >
       <Github className="w-4 h-4" />
       <span className="text-sm">Backend</span>
