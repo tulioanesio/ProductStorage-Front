@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Package,
   AlertTriangle,
   DollarSign,
-  Box,
+  ArrowLeftRight,
   Tags,
   BarChart3,
-  ArrowLeftRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import api from "../../services/api.ts";
 
 interface DashboardData {
   totalProducts: number;
   lowStockProducts: number;
+  highStockProducts: number;
   totalStockValue: number;
 }
 
@@ -21,17 +28,21 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData>({
     totalProducts: 0,
     lowStockProducts: 0,
+    highStockProducts: 0,
     totalStockValue: 0,
   });
 
   useEffect(() => {
-    const mockData: DashboardData = {
-      totalProducts: 42,
-      lowStockProducts: 5,
-      totalStockValue: 15750.5,
-    };
+    async function fetchDashboard() {
+      try {
+        const response = await api.get("/dashboard");
+        setData(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
+      }
+    }
 
-    setData(mockData);
+    fetchDashboard();
   }, []);
 
   return (
@@ -44,7 +55,9 @@ export default function Dashboard() {
           <CardContent className="p-5 flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Total de Produtos</p>
-              <p className="text-2xl font-semibold mt-1">{data.totalProducts}</p>
+              <p className="text-2xl font-semibold mt-1">
+                {data.totalProducts}
+              </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
               <Package className="text-blue-600" size={28} />
@@ -70,12 +83,12 @@ export default function Dashboard() {
           <CardContent className="p-5 flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Produtos Acima do Limite</p>
-              <p className="text-2xl font-semibold mt-1 text-red-500">
-                {data.lowStockProducts}
+              <p className="text-2xl font-semibold mt-1 text-yellow-600">
+                {data.highStockProducts}
               </p>
             </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <AlertTriangle className="text-red-600" size={28} />
+            <div className="p-3 bg-yellow-100 rounded-lg">
+              <AlertTriangle className="text-yellow-600" size={28} />
             </div>
           </CardContent>
         </Card>
@@ -85,7 +98,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-gray-500">Valor Total em Estoque</p>
               <p className="text-2xl font-semibold mt-1 text-green-600">
-                {data.totalStockValue.toLocaleString("pt-BR", {
+                {Number(data.totalStockValue ?? 0).toLocaleString("pt-BR", {
                   style: "currency",
                   currency: "BRL",
                 })}
@@ -107,7 +120,9 @@ export default function Dashboard() {
                 <Package className="text-blue-600" size={20} />
               </div>
               <CardTitle className="text-base">Produtos</CardTitle>
-              <CardDescription>Gerencie todos os produtos do estoque</CardDescription>
+              <CardDescription>
+                Gerencie todos os produtos do estoque
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
@@ -119,7 +134,9 @@ export default function Dashboard() {
                 <Tags className="text-purple-600" size={20} />
               </div>
               <CardTitle className="text-base">Categorias</CardTitle>
-              <CardDescription>Gerencie todas as categorias dos produtos</CardDescription>
+              <CardDescription>
+                Gerencie todas as categorias dos produtos
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
@@ -131,7 +148,9 @@ export default function Dashboard() {
                 <ArrowLeftRight className="text-orange-600" size={20} />
               </div>
               <CardTitle className="text-base">Movimentações</CardTitle>
-              <CardDescription>Registrar entradas e saídas de produtos</CardDescription>
+              <CardDescription>
+                Registrar entradas e saídas de produtos
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
