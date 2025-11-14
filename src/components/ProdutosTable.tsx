@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -7,12 +7,13 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   useReactTable,
   flexRender,
-} from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@tanstack/react-table";
+import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -21,7 +22,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -29,58 +30,79 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { useProdutos } from "../pages/produto/useProdutos"
-import type { ProdutoType } from "@/@types/types"
-import { toast } from "sonner"
+} from "@/components/ui/table";
+import type { ProdutoType } from "@/@types/types";
+import { toast } from "sonner";
+import { api } from "@/services/api";
+import { useProdutos } from "@/pages/produto/useProdutos";
 
-export function ProdutosTable() {
-  const [page, setPage] = React.useState(0)
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void }) {
+  const [page, setPage] = React.useState(0);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
-  const { data, loading } = useProdutos(page, 20)
+  const pageSize = 20;
+  const { data, loading } = useProdutos(page, pageSize);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/products/${id}`);
+      toast.success("Produto deletado com sucesso!", { position: "bottom-right" });
+    } catch {
+      toast.error("Erro ao deletar produto", { position: "bottom-right" });
+    }
+  };
 
   const columns: ColumnDef<ProdutoType>[] = [
     {
       accessorKey: "name",
       header: "Nome",
-      cell: ({ getValue }) => <div className="capitalize">{getValue() as string}</div>,
+      cell: ({ getValue }) => <div className="capitalize">{String(getValue())}</div>,
     },
     {
       accessorKey: "unitPrice",
       header: "Preço unitário",
-      cell: ({ getValue }) => {
-        const preco = Number(getValue())
-        const formatted = new Intl.NumberFormat("pt-BR", {
+      cell: ({ getValue }) =>
+        new Intl.NumberFormat("pt-BR", {
           style: "currency",
           currency: "BRL",
-        }).format(preco)
-        return formatted
-      },
+        }).format(Number(getValue())),
     },
     {
       accessorKey: "unitOfMeasure",
       header: "Unidade de medida",
-      cell: ({ getValue }) => getValue() as string,
+      cell: ({ getValue }) => String(getValue()),
     },
     {
       accessorKey: "availableStock",
       header: "Estoque disponível",
-      cell: ({ getValue }) => getValue() as number,
+      cell: ({ getValue }) => Number(getValue()),
+    },
+    {
+      id: "minStockQuantity",
+      header: "Qtd. mínima",
+      accessorFn: (row) => row.minQuantity ?? 0,
+      cell: ({ getValue }) => Number(getValue()),
+    },
+    {
+      id: "maxStockQuantity",
+      header: "Qtd. máxima",
+      accessorFn: (row) => row.maxQuantity ?? 0,
+      cell: ({ getValue }) => Number(getValue()),
     },
     {
       id: "categoryName",
       header: "Categoria",
       accessorFn: (row) => row.category?.name ?? "",
-      cell: ({ getValue }) => String(getValue() || ""),
+      cell: ({ getValue }) => String(getValue()),
     },
     {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const produto = row.original
+        const produto = row.original;
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -88,53 +110,64 @@ export function ProdutosTable() {
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
+
               <DropdownMenuItem
                 onClick={() => {
-                  navigator.clipboard.writeText(produto.id.toString())
-                  toast.success("ID copiado para a área de transferência com sucesso",
-                    {
-                      position: "bottom-right",
-                    }
-                  )
+                  navigator.clipboard.writeText(produto.id.toString());
+                  toast.success("ID copiado!", { position: "bottom-right" });
                 }}
               >
                 Copiar ID
               </DropdownMenuItem>
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Editar produto</DropdownMenuItem>
-              <DropdownMenuItem>Excluir produto</DropdownMenuItem>
+
+              <DropdownMenuItem onClick={() => onEdit?.(produto)}>
+                Editar produto
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={() => handleDelete(produto.id)}>
+                Excluir produto
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const table = useReactTable({
     data: data?.content ?? [],
     columns,
+    manualPagination: true,
+    pageCount: data?.totalPages ?? -1,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    state: { sorting, columnFilters, columnVisibility },
-  })
 
-  if (loading) return <p>Carregando...</p>
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      pagination: {
+        pageIndex: page,
+        pageSize,
+      },
+    },
+  });
+
+  if (loading) return <p>Carregando...</p>;
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-2xl font-semibold mb-1">Produtos</h2>
-          <p className="text-gray-500">Gerencie todos os produtos cadastrados</p>
-        </div>
-      </div>
-
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nome..."
@@ -146,9 +179,11 @@ export function ProdutosTable() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Exibição das colunas <ChevronDown />
+              Exibição das colunas
+              <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
             {table
               .getAllColumns()
@@ -159,7 +194,9 @@ export function ProdutosTable() {
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
-                  {column.id}
+                  {typeof column.columnDef.header === "string"
+                    ? column.columnDef.header
+                    : column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -211,7 +248,7 @@ export function ProdutosTable() {
           onClick={() => setPage((p) => Math.max(p - 1, 0))}
           disabled={data?.first}
         >
-          <ArrowLeft size={24} /> Anterior
+          <ArrowLeft size={20} /> Anterior
         </Button>
 
         <Button
@@ -220,9 +257,9 @@ export function ProdutosTable() {
           onClick={() => setPage((p) => p + 1)}
           disabled={data?.last}
         >
-          <ArrowRight size={24} /> Próxima
+          <ArrowRight size={20} /> Próxima
         </Button>
       </div>
     </div>
-  )
+  );
 }

@@ -16,19 +16,92 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ProdutosTable } from "../../components/ProdutosTable"
-
-const categoriasMock = [
-    { id: "1", name: "Refrigerados" },
-    { id: "2", name: "Papelão" },
-    { id: "3", name: "Limpeza" },
-    { id: "4", name: "Bebidas" },
-]
+import { toast } from "sonner"
+import { api } from "@/services/api"
 
 export default function ProdutosPage() {
     const [open, setOpen] = useState(false)
+    const [editingProduct, setEditingProduct] = useState<any>(null)
+
+    const [name, setName] = useState("")
+    const [unitPrice, setUnitPrice] = useState("")
+    const [unitOfMeasure, setUnitOfMeasure] = useState("")
+    const [availableStock, setAvailableStock] = useState("")
+    const [minQuantity, setMinQuantity] = useState("")
+    const [maxQuantity, setMaxQuantity] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
+
+    const [categorias, setCategorias] = useState<any[]>([])
+
+    useEffect(() => {
+        api.get("/categories").then((res) => {
+            if (Array.isArray(res.data.content)) {
+                setCategorias(res.data.content)
+            } else {
+                setCategorias([])
+            }
+        })
+    }, [])
+
+    const resetForm = () => {
+        setName("")
+        setUnitPrice("")
+        setUnitOfMeasure("")
+        setAvailableStock("")
+        setMinQuantity("")
+        setMaxQuantity("")
+        setSelectedCategory(undefined)
+        setEditingProduct(null)
+    }
+
+    const openEditor = (product: any) => {
+        setEditingProduct(product)
+        setName(product.name)
+        setUnitPrice(String(product.unitPrice))
+        setUnitOfMeasure(product.unitOfMeasure)
+        setAvailableStock(String(product.availableStock))
+        setMinQuantity(String(product.minStockQuantity))
+        setMaxQuantity(String(product.maxStockQuantity))
+        setSelectedCategory(String(product.category?.id ?? ""))
+        setOpen(true)
+    }
+
+    const handleSave = async () => {
+        try {
+            if (editingProduct) {
+                await api.put(`/products/${editingProduct.id}`, {
+                    name,
+                    unitPrice: Number(unitPrice),
+                    unitOfMeasure,
+                    availableStock: Number(availableStock),
+                    minStockQuantity: Number(minQuantity),
+                    maxStockQuantity: Number(maxQuantity),
+                    categoryId: selectedCategory ? Number(selectedCategory) : null,
+                })
+
+                toast.success("Produto atualizado!", { position: "bottom-right" })
+            } else {
+                await api.post("/products", {
+                    name,
+                    unitPrice: Number(unitPrice),
+                    unitOfMeasure,
+                    availableStock: Number(availableStock),
+                    minStockQuantity: Number(minQuantity),
+                    maxStockQuantity: Number(maxQuantity),
+                    categoryId: selectedCategory ? Number(selectedCategory) : null,
+                })
+
+                toast.success("Produto criado!", { position: "bottom-right" })
+            }
+
+            setOpen(false)
+            resetForm()
+        } catch {
+            toast.error("Erro ao salvar produto", { position: "bottom-right" })
+        }
+    }
 
     return (
         <div className="w-full">
@@ -40,56 +113,56 @@ export default function ProdutosPage() {
 
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={resetForm}>
                             <Plus className="mr-2 h-4 w-4" /> Registrar produto
                         </Button>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Novo produto</DialogTitle>
+                            <DialogTitle>{editingProduct ? "Editar produto" : "Novo produto"}</DialogTitle>
                         </DialogHeader>
 
                         <div className="grid gap-3">
                             <div className="grid gap-1">
-                                <Label htmlFor="product-name">Nome do produto</Label>
-                                <Input id="product-name" placeholder="Nome do produto" />
+                                <Label>Nome do produto</Label>
+                                <Input value={name} onChange={(e) => setName(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="unit-price">Preço unitário</Label>
-                                <Input id="unit-price" type="number" placeholder="Preço unitário" />
+                                <Label>Preço unitário</Label>
+                                <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="unit-of-measure">Unidade de medida</Label>
-                                <Input id="unit-of-measure" placeholder="Unidade de medida" />
+                                <Label>Unidade de medida</Label>
+                                <Input value={unitOfMeasure} onChange={(e) => setUnitOfMeasure(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="available-stock">Estoque disponível</Label>
-                                <Input id="available-stock" type="number" placeholder="Estoque disponível" />
+                                <Label>Estoque disponível</Label>
+                                <Input type="number" value={availableStock} onChange={(e) => setAvailableStock(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="min-qty">Quantidade mínima</Label>
-                                <Input id="min-qty" type="number" placeholder="Quantidade mínima" />
+                                <Label>Quantidade mínima</Label>
+                                <Input type="number" value={minQuantity} onChange={(e) => setMinQuantity(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="max-qty">Quantidade máxima</Label>
-                                <Input id="max-qty" type="number" placeholder="Quantidade máxima" />
+                                <Label>Quantidade máxima</Label>
+                                <Input type="number" value={maxQuantity} onChange={(e) => setMaxQuantity(e.target.value)} />
                             </div>
 
                             <div className="grid gap-1">
-                                <Label htmlFor="category-select">Categoria</Label>
-                                <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v)}>
-                                    <SelectTrigger id="category-select" className="w-full">
+                                <Label>Categoria</Label>
+                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Selecione uma categoria" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {categoriasMock.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>
+                                        {categorias.map((c) => (
+                                            <SelectItem key={c.id} value={String(c.id)}>
                                                 {c.name}
                                             </SelectItem>
                                         ))}
@@ -97,7 +170,7 @@ export default function ProdutosPage() {
                                 </Select>
                             </div>
 
-                            <Button className="w-full mt-2" onClick={() => setOpen(false)}>
+                            <Button className="w-full mt-2" onClick={handleSave}>
                                 Salvar
                             </Button>
                         </div>
@@ -105,7 +178,7 @@ export default function ProdutosPage() {
                 </Dialog>
             </div>
 
-            <ProdutosTable />
+            <ProdutosTable onEdit={openEditor} />
         </div>
     )
 }
