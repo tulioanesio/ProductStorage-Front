@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 type Movement = {
     id: number
@@ -109,7 +110,14 @@ export const columns: ColumnDef<Movement>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(String(movement.id))}
+                            onClick={() => {
+                                navigator.clipboard.writeText(movement.id.toString())
+                                toast.success("ID copiado para a área de transferência com sucesso",
+                                    {
+                                        position: "bottom-right",
+                                    }
+                                )
+                            }}
                         >
                             Copiar ID
                         </DropdownMenuItem>

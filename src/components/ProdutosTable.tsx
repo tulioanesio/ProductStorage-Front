@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table"
 import { useProdutos } from "../pages/produto/useProdutos"
 import type { ProdutoType } from "@/@types/types"
+import { toast } from "sonner"
 
 export function ProdutosTable() {
   const [page, setPage] = React.useState(0)
@@ -89,7 +90,16 @@ export function ProdutosTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(produto.id.toString())}>
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(produto.id.toString())
+                  toast.success("ID copiado para a área de transferência com sucesso",
+                    {
+                      position: "bottom-right",
+                    }
+                  )
+                }}
+              >
                 Copiar ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />

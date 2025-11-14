@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 type Payment = {
   id: string
@@ -79,10 +80,22 @@ export const columns: ColumnDef<Payment>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(payment.id)}>
+
+            <DropdownMenuItem
+              onClick={() => {
+                navigator.clipboard.writeText(payment.id)
+                toast.success("ID copiado para a área de transferência com sucesso",
+                  {
+                    position: "bottom-right",
+                  }
+                )
+              }}
+            >
               Copiar ID
             </DropdownMenuItem>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem>Editar categoria</DropdownMenuItem>
             <DropdownMenuItem>Excluir categoria</DropdownMenuItem>
           </DropdownMenuContent>
@@ -118,6 +131,7 @@ export function CategoriaPage() {
           <h2 className="text-2xl font-semibold mb-1">Categorias</h2>
           <p className="text-gray-500">Gerencie todas as categorias do estoque</p>
         </div>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -146,7 +160,9 @@ export function CategoriaPage() {
                 <Input id="category-packaging" placeholder="Embalagem" />
               </div>
 
-              <Button onClick={() => setOpen(false)}>Salvar</Button>
+              <Button className="w-full" onClick={() => setOpen(false)}>
+                Salvar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
