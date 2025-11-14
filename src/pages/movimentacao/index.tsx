@@ -9,7 +9,7 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, MoreHorizontal, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -88,12 +88,16 @@ export const columns: ColumnDef<Movement>[] = [
     {
         accessorKey: "movementDate",
         header: "Data",
+        cell: ({ row }) => {
+            const raw = row.getValue("movementDate") as string
+            const date = new Date(raw)
+            return date.toLocaleDateString("pt-BR")
+        }
     },
     {
         id: "actions",
         cell: ({ row }) => {
             const movement = row.original
-
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -109,7 +113,7 @@ export const columns: ColumnDef<Movement>[] = [
                             Copiar ID
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Detalhes</DropdownMenuItem>
+                        <DropdownMenuItem>Excluir movimentação</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
@@ -173,7 +177,6 @@ export function MovementPage() {
                         </DialogHeader>
 
                         <div className="grid gap-3 mt-4">
-
                             <Select value={type} onValueChange={(v: "ENTRY" | "EXIT") => setType(v)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Tipo de movimentação" />

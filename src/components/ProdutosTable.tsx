@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import {
   type ColumnDef,
@@ -14,7 +12,7 @@ import {
 } from "@tanstack/react-table"
 import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -24,7 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -41,46 +38,25 @@ export function ProdutosTable() {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
 
   const { data, loading } = useProdutos(page, 20)
 
   const columns: ColumnDef<ProdutoType>[] = [
     {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
       accessorKey: "name",
       header: "Nome",
-      cell: ({ getValue }) => <div className="font-medium">{getValue() as string}</div>,
+      cell: ({ getValue }) => <div className="capitalize">{getValue() as string}</div>,
     },
     {
       accessorKey: "unitPrice",
-      header: () => <div className="text-right">Preço unitário</div>,
+      header: "Preço unitário",
       cell: ({ getValue }) => {
         const preco = Number(getValue())
         const formatted = new Intl.NumberFormat("pt-BR", {
           style: "currency",
           currency: "BRL",
         }).format(preco)
-        return <div className="text-right">{formatted}</div>
+        return formatted
       },
     },
     {
@@ -90,14 +66,14 @@ export function ProdutosTable() {
     },
     {
       accessorKey: "availableStock",
-      header: () => <div className="text-center">Estoque disponível</div>,
-      cell: ({ getValue }) => <div className="text-center">{getValue() as number}</div>,
+      header: "Estoque disponível",
+      cell: ({ getValue }) => getValue() as number,
     },
     {
       id: "categoryName",
-      header: () => <div className="text-center">Categoria</div>,
+      header: "Categoria",
       accessorFn: (row) => row.category?.name ?? "",
-      cell: ({ getValue }) => <div className="text-center">{String(getValue() || "")}</div>,
+      cell: ({ getValue }) => String(getValue() || ""),
     },
     {
       id: "actions",
@@ -135,14 +111,20 @@ export function ProdutosTable() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: { sorting, columnFilters, columnVisibility, rowSelection },
+    state: { sorting, columnFilters, columnVisibility },
   })
 
   if (loading) return <p>Carregando...</p>
 
   return (
     <div className="w-full">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-2xl font-semibold mb-1">Produtos</h2>
+          <p className="text-gray-500">Gerencie todos os produtos cadastrados</p>
+        </div>
+      </div>
+
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nome..."
@@ -150,6 +132,7 @@ export function ProdutosTable() {
           onChange={(e) => table.getColumn("name")?.setFilterValue(e.target.value)}
           className="max-w-sm"
         />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -179,7 +162,7 @@ export function ProdutosTable() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-center">
+                  <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -188,12 +171,13 @@ export function ProdutosTable() {
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-center">
+                    <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -210,30 +194,24 @@ export function ProdutosTable() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-gray-600">
-          Página {data?.number! + 1} de {data?.totalPages} ({data?.totalElements} itens)
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(p - 1, 0))}
-            disabled={data?.first}
-          >
-            <ArrowLeft size={24} />
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={data?.last}
-          >
-            <ArrowRight size={24} />
-            Próxima
-          </Button>
-        </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+          disabled={data?.first}
+        >
+          <ArrowLeft size={24} /> Anterior
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={data?.last}
+        >
+          <ArrowRight size={24} /> Próxima
+        </Button>
       </div>
     </div>
   )
