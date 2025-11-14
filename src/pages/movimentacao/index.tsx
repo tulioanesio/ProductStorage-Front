@@ -31,6 +31,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 type Movement = {
     id: number
@@ -151,7 +152,6 @@ export function MovementPage() {
             movementType: type,
             status: "Normal",
         }
-
         setData((prev) => [newMovement, ...prev])
         setOpen(false)
     }
@@ -167,44 +167,57 @@ export function MovementPage() {
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Nova movimentação
+                            <Plus className="mr-2 h-4 w-4" /> Registrar movimentação
                         </Button>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Registrar movimentação</DialogTitle>
+                            <DialogTitle>Nova movimentação</DialogTitle>
                         </DialogHeader>
 
-                        <div className="grid gap-3 mt-4">
-                            <Select value={type} onValueChange={(v: "ENTRY" | "EXIT") => setType(v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Tipo de movimentação" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ENTRY">Entrada</SelectItem>
-                                    <SelectItem value="EXIT">Saída</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="grid gap-4 mt-4">
 
-                            <Input
-                                placeholder="Nome do produto"
-                                value={product}
-                                onChange={(e) => setProduct(e.target.value)}
-                            />
+                            <div className="grid gap-1">
+                                <Label>Tipo de movimentação</Label>
+                                <Select value={type} onValueChange={(v: "ENTRY" | "EXIT") => setType(v)}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Tipo de movimentação" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ENTRY">Entrada</SelectItem>
+                                        <SelectItem value="EXIT">Saída</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                            <Input
-                                type="number"
-                                placeholder="Quantidade"
-                                value={quantity}
-                                onChange={(e) => setQuantity(e.target.value)}
-                            />
+                            <div className="grid gap-1">
+                                <Label>Produto</Label>
+                                <Input
+                                    placeholder="Nome do produto"
+                                    value={product}
+                                    onChange={(e) => setProduct(e.target.value)}
+                                />
+                            </div>
 
-                            <Input
-                                type="datetime-local"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                            />
+                            <div className="grid gap-1">
+                                <Label>Quantidade</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="Quantidade"
+                                    value={quantity}
+                                    onChange={(e) => setQuantity(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="grid gap-1">
+                                <Label>Data</Label>
+                                <Input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                />
+                            </div>
 
                             <Button onClick={handleSave}>Salvar</Button>
                         </div>

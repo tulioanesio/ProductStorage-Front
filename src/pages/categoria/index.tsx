@@ -12,7 +12,6 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table"
 import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -33,6 +32,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+
+type Payment = {
+  id: string
+  name: string
+  size: string
+  packaging: string
+}
 
 const data: Payment[] = [
   { id: "1", name: "Refrigerados", size: "Grande", packaging: "Caixa" },
@@ -41,13 +48,6 @@ const data: Payment[] = [
   { id: "4", name: "Teste 2", size: "Grande", packaging: "Caixa" },
   { id: "5", name: "Teste 3", size: "Pequeno", packaging: "Caixa" },
 ]
-
-export type Payment = {
-  id: string
-  name: string
-  size: string
-  packaging: string
-}
 
 export const columns: ColumnDef<Payment>[] = [
   {
@@ -121,17 +121,31 @@ export function CategoriaPage() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> Adicionar categoria
+              <Plus className="mr-2 h-4 w-4" /> Registrar categoria
             </Button>
           </DialogTrigger>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nova categoria</DialogTitle>
             </DialogHeader>
+
             <div className="grid gap-3">
-              <Input placeholder="Nome da categoria" />
-              <Input placeholder="Tamanho" />
-              <Input placeholder="Embalagem" />
+              <div className="grid gap-1">
+                <Label htmlFor="category-name">Nome da categoria</Label>
+                <Input id="category-name" placeholder="Nome da categoria" />
+              </div>
+
+              <div className="grid gap-1">
+                <Label htmlFor="category-size">Tamanho</Label>
+                <Input id="category-size" placeholder="Tamanho" />
+              </div>
+
+              <div className="grid gap-1">
+                <Label htmlFor="category-packaging">Embalagem</Label>
+                <Input id="category-packaging" placeholder="Embalagem" />
+              </div>
+
               <Button onClick={() => setOpen(false)}>Salvar</Button>
             </div>
           </DialogContent>
@@ -145,12 +159,14 @@ export function CategoriaPage() {
           onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
               Exibição das colunas <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
             {table
               .getAllColumns()
@@ -184,6 +200,7 @@ export function CategoriaPage() {
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
@@ -215,6 +232,7 @@ export function CategoriaPage() {
         >
           <ArrowLeft size={24} /> Anterior
         </Button>
+
         <Button
           variant="outline"
           size="sm"
