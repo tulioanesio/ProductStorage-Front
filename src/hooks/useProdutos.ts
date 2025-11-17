@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react"
-import { api } from "@/services/api"
+import { useEffect, useState } from "react";
+import { api } from "@/services/api";
 
-export function useProdutos(page: number, size: number, refresh: number) {
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+export function useProdutos(page: number, size: number, refresh: number, nameFilter: string = "") {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const refetch = () => {
-    setLoading(true)
+    setLoading(true);
+    const params: any = { page, size };
+    if (nameFilter) params.name = nameFilter;
+
     api
-      .get("/products", { params: { page, size } })
+      .get("/products", { params })
       .then((res) => setData(res.data))
-      .finally(() => setLoading(false))
-  }
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    refetch()
-  }, [page, size, refresh])
+    refetch();
+  }, [page, size, refresh, nameFilter]);
 
-  return { data, loading, refetch }
+  return { data, loading, refetch };
 }
