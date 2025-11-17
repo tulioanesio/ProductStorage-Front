@@ -220,7 +220,9 @@ export function ProdutosTable({
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => setProductToDelete(produto)}>
-                  Excluir produto
+                  <p className="text-red-500">
+                    Excluir produto
+                  </p>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
