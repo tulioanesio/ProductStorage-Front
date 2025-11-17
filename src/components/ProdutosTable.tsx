@@ -11,12 +11,15 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
+
 import {
   ArrowLeft,
   ArrowRight,
   ChevronDown,
   MoreHorizontal,
   AlertTriangle,
+  CircleArrowDown,
+  CircleArrowUp,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Table,
   TableBody,
@@ -38,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,7 +61,13 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { useProdutos } from "@/pages/produto/useProdutos";
 
-export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void }) {
+export function ProdutosTable({
+  onEdit,
+  reload,
+}: {
+  onEdit?: (p: ProdutoType) => void;
+  reload: number;
+}) {
   const [page, setPage] = React.useState(0);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -65,14 +76,22 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
   const [productToDelete, setProductToDelete] = React.useState<ProdutoType | null>(null);
 
   const pageSize = 20;
-  const { data, loading } = useProdutos(page, pageSize);
+
+  const { data, loading, refetch } = useProdutos(page, pageSize, reload);
+
+  React.useEffect(() => {
+    refetch();
+  }, [reload]);
 
   const confirmDelete = async () => {
     if (!productToDelete) return;
     try {
       await api.delete(`/products/${productToDelete.id}`);
       toast.success("Produto deletado com sucesso!", { position: "bottom-right" });
+
       setProductToDelete(null);
+      refetch();
+
     } catch {
       toast.error("Erro ao deletar produto", { position: "bottom-right" });
     }
@@ -88,22 +107,28 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
         const max = produto.maxQuantity ?? Infinity;
         const estoque = produto.availableStock ?? 0;
 
-        const isOutOfRange = estoque < min || estoque > max;
+        const isBelowMin = estoque < min;
+        const isAboveMax = estoque > max;
 
         return (
           <div className="flex items-center gap-2">
             <span className="capitalize">{produto.name}</span>
 
-            {isOutOfRange && (
+            {(isBelowMin || isAboveMax) && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    {(isBelowMin) && (
+                      <CircleArrowDown className="h-4 w-4 text-red-600" />
+                    )}
+                    {(isAboveMax) && (
+                      <CircleArrowUp className="h-4 w-4 text-red-600" />
+                    )}
                   </TooltipTrigger>
 
                   <TooltipContent>
                     <p>
-                      Estoque fora do limite permitido: min {min}, max {max}, atual {estoque}
+                      O estoque deste produto está {isBelowMin ? "abaixo" : "acima"} do limite permitido
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -113,6 +138,7 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
         );
       },
     },
+
     {
       accessorKey: "unitPrice",
       header: "Preço unitário",
@@ -122,34 +148,44 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
           currency: "BRL",
         }).format(Number(getValue())),
     },
+
     {
       accessorKey: "unitOfMeasure",
       header: "Unidade de medida",
       cell: ({ getValue }) => String(getValue()),
     },
+
     {
       accessorKey: "availableStock",
       header: "Estoque disponível",
       cell: ({ getValue }) => Number(getValue()),
     },
+
     {
       id: "minStockQuantity",
       header: "Qtd. mínima",
       accessorFn: (row) => row.minQuantity ?? 0,
       cell: ({ getValue }) => Number(getValue()),
     },
+
     {
       id: "maxStockQuantity",
       header: "Qtd. máxima",
       accessorFn: (row) => row.maxQuantity ?? 0,
       cell: ({ getValue }) => Number(getValue()),
     },
+
     {
       id: "categoryName",
       header: "Categoria",
       accessorFn: (row) => row.category?.name ?? "",
-      cell: ({ getValue }) => String(getValue()),
+      cell: ({ getValue }) => (
+        <div className={getValue() != "" ? "inline-flex items-center px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-800" : ""}>
+          {String(getValue())}
+        </div>
+      ),
     },
+
     {
       id: "actions",
       enableHiding: false,
@@ -171,7 +207,7 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
                 <DropdownMenuItem
                   onClick={() => {
                     navigator.clipboard.writeText(produto.id.toString());
-                    toast.success("ID copiado!", { position: "bottom-right" });
+                    toast.success("ID copiado para a área de transferência com sucesso", { position: "bottom-right" });
                   }}
                 >
                   Copiar ID
@@ -191,9 +227,7 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
 
             <AlertDialog
               open={productToDelete?.id === produto.id}
-              onOpenChange={(open) => {
-                if (!open) setProductToDelete(null);
-              }}
+              onOpenChange={(open: boolean) => !open && setProductToDelete(null)}
             >
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -221,8 +255,10 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
   const table = useReactTable({
     data: data?.content ?? [],
     columns,
+
     manualPagination: true,
     pageCount: data?.totalPages ?? -1,
+
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,

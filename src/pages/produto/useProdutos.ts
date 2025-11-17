@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
-import type { PageResponse, ProdutoType } from "@/@types/types";
-import { api } from "@/services/api";
+import { useEffect, useState } from "react"
+import { api } from "@/services/api"
 
-export function useProdutos(page: number, size: number) {
- const [data, setData] = useState<PageResponse<ProdutoType>>();
- const [loading, setLoading] = useState(true);
+export function useProdutos(page: number, size: number, refresh: number) {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
- useEffect(() => {
-  setLoading(true);
+  const refetch = () => {
+    setLoading(true)
+    api
+      .get("/products", { params: { page, size } })
+      .then((res) => setData(res.data))
+      .finally(() => setLoading(false))
+  }
 
-  api
-   .get(`/products?page=${page}&size=${size}`)
-   .then((res) => setData(res.data))
-   .finally(() => setLoading(false));
- }, [page, size]);
+  useEffect(() => {
+    refetch()
+  }, [page, size, refresh])
 
- return { data, loading };
+  return { data, loading, refetch }
 }

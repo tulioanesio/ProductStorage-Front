@@ -25,6 +25,8 @@ export default function ProdutosPage() {
     const [open, setOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<any>(null)
 
+    const [reload, setReload] = useState(0)
+
     const [name, setName] = useState("")
     const [unitPrice, setUnitPrice] = useState("")
     const [unitOfMeasure, setUnitOfMeasure] = useState("")
@@ -62,8 +64,8 @@ export default function ProdutosPage() {
         setUnitPrice(String(product.unitPrice))
         setUnitOfMeasure(product.unitOfMeasure)
         setAvailableStock(String(product.availableStock))
-        setMinQuantity(String(product.minStockQuantity))
-        setMaxQuantity(String(product.maxStockQuantity))
+        setMinQuantity(String(product.minQuantity))
+        setMaxQuantity(String(product.maxQuantity))
         setSelectedCategory(String(product.category?.id ?? ""))
         setOpen(true)
     }
@@ -98,6 +100,9 @@ export default function ProdutosPage() {
 
             setOpen(false)
             resetForm()
+
+            setReload((r) => r + 1)
+
         } catch {
             toast.error("Erro ao salvar produto", { position: "bottom-right" })
         }
@@ -178,7 +183,7 @@ export default function ProdutosPage() {
                 </Dialog>
             </div>
 
-            <ProdutosTable onEdit={openEditor} />
+            <ProdutosTable onEdit={openEditor} reload={reload} />
         </div>
     )
 }
