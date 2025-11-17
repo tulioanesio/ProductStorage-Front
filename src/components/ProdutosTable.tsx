@@ -11,7 +11,14 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
-import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  MoreHorizontal,
+  AlertTriangle,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +38,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import type { ProdutoType } from "@/@types/types";
 import { toast } from "sonner";
 import { api } from "@/services/api";
@@ -42,13 +62,17 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
+  const [productToDelete, setProductToDelete] = React.useState<ProdutoType | null>(null);
+
   const pageSize = 20;
   const { data, loading } = useProdutos(page, pageSize);
 
-  const handleDelete = async (id: number) => {
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
     try {
-      await api.delete(`/products/${id}`);
+      await api.delete(`/products/${productToDelete.id}`);
       toast.success("Produto deletado com sucesso!", { position: "bottom-right" });
+      setProductToDelete(null);
     } catch {
       toast.error("Erro ao deletar produto", { position: "bottom-right" });
     }
@@ -58,7 +82,36 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
     {
       accessorKey: "name",
       header: "Nome",
-      cell: ({ getValue }) => <div className="capitalize">{String(getValue())}</div>,
+      cell: ({ row }) => {
+        const produto = row.original;
+        const min = produto.minQuantity ?? 0;
+        const max = produto.maxQuantity ?? Infinity;
+        const estoque = produto.availableStock ?? 0;
+
+        const isOutOfRange = estoque < min || estoque > max;
+
+        return (
+          <div className="flex items-center gap-2">
+            <span className="capitalize">{produto.name}</span>
+
+            {isOutOfRange && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  </TooltipTrigger>
+
+                  <TooltipContent>
+                    <p>
+                      Estoque fora do limite permitido: min {min}, max {max}, atual {estoque}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "unitPrice",
@@ -104,36 +157,62 @@ export function ProdutosTable({ onEdit }: { onEdit?: (p: ProdutoType) => void })
         const produto = row.original;
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
 
-              <DropdownMenuItem
-                onClick={() => {
-                  navigator.clipboard.writeText(produto.id.toString());
-                  toast.success("ID copiado!", { position: "bottom-right" });
-                }}
-              >
-                Copiar ID
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(produto.id.toString());
+                    toast.success("ID copiado!", { position: "bottom-right" });
+                  }}
+                >
+                  Copiar ID
+                </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => onEdit?.(produto)}>
-                Editar produto
-              </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit?.(produto)}>
+                  Editar produto
+                </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => handleDelete(produto.id)}>
-                Excluir produto
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={() => setProductToDelete(produto)}>
+                  Excluir produto
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AlertDialog
+              open={productToDelete?.id === produto.id}
+              onOpenChange={(open) => {
+                if (!open) setProductToDelete(null);
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir o produto{" "}
+                    <strong>{produto.name}</strong>? Esta ação não pode ser revertida.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete}>
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         );
       },
     },
