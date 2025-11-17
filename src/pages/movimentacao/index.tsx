@@ -1,196 +1,108 @@
-import * as React from "react"
-import {
-    type ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    getFilteredRowModel,
-    type SortingState,
-    useReactTable,
-} from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, MoreHorizontal, Plus } from "lucide-react"
-
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react"
 import { toast } from "sonner"
+import { api } from "@/services/api"
+import { MovimentacoesTable } from "./MovimentacoesTable"
+import { useMovimentacoes, type Movement } from "./useMovimentacoes"
+import { InfiniteProductSelect } from "./InfiniteProductSelect"
 
-type Movement = {
-    id: number
-    product: {
-        id: number
-        name: string
+export default function MovimentacoesPage() {
+    const [open, setOpen] = useState(false)
+    const [editing, setEditing] = useState<Movement | null>(null)
+
+    const [reload, setReload] = useState(0)
+
+    const [productId, setProductId] = useState("")
+    const [movementType, setMovementType] = useState<"ENTRY" | "EXIT">("ENTRY")
+    const [quantity, setQuantity] = useState("")
+    const [movementDate, setMovementDate] = useState("")
+
+    const { data } = useMovimentacoes(reload)
+
+    const resetForm = () => {
+        setProductId("")
+        setQuantity("")
+        setMovementType("ENTRY")
+        setMovementDate("")
+        setEditing(null)
     }
-    movementDate: string
-    quantity: number
-    movementType: "ENTRY" | "EXIT"
-    status: string
-}
 
-const MOCK_MOVEMENTS: Movement[] = [
-    {
-        id: 10,
-        product: { id: 1, name: "Notebook Dell Inspiron 15" },
-        movementDate: "2025-11-04",
-        quantity: 15,
-        movementType: "ENTRY",
-        status: "Normal"
-    },
-    {
-        id: 11,
-        product: { id: 2, name: "Mouse Logitech M170" },
-        movementDate: "2025-11-05",
-        quantity: 5,
-        movementType: "EXIT",
-        status: "Normal"
-    },
-]
+    const openEditor = (m: Movement) => {
+        setEditing(m)
+        setProductId(String(m.product.id))
+        setMovementType(m.movementType)
+        setQuantity(String(m.quantity))
+        setMovementDate(m.movementDate)
+        setOpen(true)
+    }
 
-export const columns: ColumnDef<Movement>[] = [
-    {
-        accessorKey: "movementType",
-        header: "Tipo",
-        cell: ({ row }) => {
-            const type = row.getValue("movementType")
-            return (
-                <span className={`font-medium ${type === "ENTRY" ? "py-1 px-2 rounded bg-green-200 text-green-600" : "p-1 rounded bg-red-200 text-red-600"}`}>
-                    {type === "ENTRY" ? "Entrada" : "Saída"}
-                </span>
-            )
-        },
-    },
-    {
-        accessorKey: "product",
-        header: "Produto",
-        cell: ({ row }) => row.original.product.name,
-    },
-    {
-        accessorKey: "quantity",
-        header: "Quantidade",
-    },
-    {
-        accessorKey: "movementDate",
-        header: "Data",
-        cell: ({ row }) => {
-            const raw = row.getValue("movementDate") as string
-            const date = new Date(raw)
-            return date.toLocaleDateString("pt-BR")
+    const handleSave = async () => {
+        try {
+            const payload = {
+                productId: Number(productId),
+                quantity: Number(quantity),
+                movementType,
+                movementDate,
+            }
+
+            if (editing) {
+                await api.put(`/movements/${editing.id}`, payload)
+                toast.success("Movimentação atualizada!", { position: "bottom-right" })
+            } else {
+                await api.post("/movements", payload)
+                toast.success("Movimentação criada!", { position: "bottom-right" })
+            }
+
+            resetForm()
+            setOpen(false)
+            setReload(r => r + 1)
+        } catch {
+            toast.error("Erro ao salvar movimentação", { position: "bottom-right" })
         }
-    },
-    {
-        id: "actions",
-        cell: ({ row }) => {
-            const movement = row.original
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => {
-                                navigator.clipboard.writeText(movement.id.toString())
-                                toast.success("ID copiado para a área de transferência com sucesso",
-                                    {
-                                        position: "bottom-right",
-                                    }
-                                )
-                            }}
-                        >
-                            Copiar ID
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Excluir movimentação</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
-    },
-]
-
-export function MovementPage() {
-    const [data, setData] = React.useState<Movement[]>(MOCK_MOVEMENTS)
-    const [open, setOpen] = React.useState(false)
-
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [type, setType] = React.useState<"ENTRY" | "EXIT">("ENTRY")
-    const [product, setProduct] = React.useState("")
-    const [quantity, setQuantity] = React.useState("")
-    const [date, setDate] = React.useState("")
-
-    const table = useReactTable({
-        data,
-        columns,
-        onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getCoreRowModel: getCoreRowModel(),
-        state: { sorting },
-    })
-
-    function handleSave() {
-        const newMovement: Movement = {
-            id: Math.floor(Math.random() * 9999),
-            product: { id: 1, name: product },
-            movementDate: date || new Date().toISOString(),
-            quantity: Number(quantity),
-            movementType: type,
-            status: "Normal",
-        }
-        setData((prev) => [newMovement, ...prev])
-        setOpen(false)
     }
 
     return (
         <div className="w-full">
             <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h2 className="text-2xl font-semibold mb-2">Movimentações</h2>
-                    <p className="text-gray-500 mb-6">Registre e acompanhe as entradas e saídas de estoque</p>
+                    <h2 className="text-2xl font-semibold mb-1">Movimentações</h2>
+                    <p className="text-gray-500">Controle de entradas e saídas</p>
                 </div>
 
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={resetForm}>
                             <Plus className="mr-2 h-4 w-4" /> Registrar movimentação
                         </Button>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Nova movimentação</DialogTitle>
+                            <DialogTitle>{editing ? "Editar movimentação" : "Nova movimentação"}</DialogTitle>
                         </DialogHeader>
 
-                        <div className="grid gap-4 mt-4">
+                        <div className="grid gap-3 mt-2">
+                            <div>
+                                <Label className="pb-1">Produto</Label>
+                                <InfiniteProductSelect value={productId} onChange={setProductId} />
+                            </div>
 
-                            <div className="grid gap-1">
-                                <Label>Tipo de movimentação</Label>
-                                <Select value={type} onValueChange={(v: "ENTRY" | "EXIT") => setType(v)}>
+                            <div>
+                                <Label className="pb-1">Tipo</Label>
+                                <Select value={movementType} onValueChange={(v: any) => setMovementType(v as "ENTRY" | "EXIT")}>
                                     <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Tipo de movimentação" />
+                                        <SelectValue placeholder="Selecione o tipo" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ENTRY">Entrada</SelectItem>
@@ -199,106 +111,23 @@ export function MovementPage() {
                                 </Select>
                             </div>
 
-                            <div className="grid gap-1">
-                                <Label>Produto</Label>
-                                <Input
-                                    placeholder="Nome do produto"
-                                    value={product}
-                                    onChange={(e) => setProduct(e.target.value)}
-                                />
+                            <div>
+                                <Label className="pb-1">Quantidade</Label>
+                                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                             </div>
 
-                            <div className="grid gap-1">
-                                <Label>Quantidade</Label>
-                                <Input
-                                    type="number"
-                                    placeholder="Quantidade"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(e.target.value)}
-                                />
+                            <div>
+                                <Label className="pb-1">Data</Label>
+                                <Input type="date" value={movementDate} onChange={(e) => setMovementDate(e.target.value)} />
                             </div>
 
-                            <div className="grid gap-1">
-                                <Label>Data</Label>
-                                <Input
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                />
-                            </div>
-
-                            <Button onClick={handleSave}>Salvar</Button>
+                            <Button className="w-full mt-2" onClick={handleSave}>Salvar</Button>
                         </div>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            <div className="flex items-center py-4">
-                <Input
-                    placeholder="Buscar por produto..."
-                    value={(table.getColumn("product")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("product")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm"
-                />
-            </div>
-
-            <div className="overflow-hidden rounded-md border">
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-
-                    <TableBody>
-                        {table.getRowModel().rows.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id}>
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    Nenhuma movimentação encontrada.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    <ArrowLeft size={20} /> Anterior
-                </Button>
-
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    Próxima <ArrowRight size={20} />
-                </Button>
-            </div>
+            <MovimentacoesTable data={data} reload={() => setReload(r => r + 1)} onEdit={openEditor} />
         </div>
     )
 }
