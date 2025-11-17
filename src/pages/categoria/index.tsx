@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { toast } from "sonner"
 import { api } from "@/services/api"
 import { CategoriasTable } from "../../components/table/CategoriasTable"
@@ -17,18 +17,19 @@ import { CategoriasTable } from "../../components/table/CategoriasTable"
 export default function CategoriasPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-
   const [reload, setReload] = useState(0)
 
   const [name, setName] = useState("")
   const [size, setSize] = useState("")
   const [packaging, setPackaging] = useState("")
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const resetForm = () => {
     setName("")
     setSize("")
     setPackaging("")
     setEditing(null)
+    setTouched({})
   }
 
   const openEditor = (cat: any) => {
@@ -37,15 +38,30 @@ export default function CategoriasPage() {
     setSize(cat?.size ?? "")
     setPackaging(cat?.packaging ?? "")
     setOpen(true)
+    setTouched({})
   }
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+  }
+
+  const validation = useMemo(() => {
+    const errors: Record<string, string> = {}
+
+    if (!name.trim()) errors.name = "Nome da categoria é obrigatório"
+    if (!size.trim()) errors.size = "Tamanho é obrigatório"
+    if (!packaging.trim()) errors.packaging = "Embalagem é obrigatória"
+
+    return errors
+  }, [name, size, packaging])
+
+  const isFormValid = useMemo(() => Object.keys(validation).length === 0, [validation])
 
   const handleSave = async () => {
     try {
-      const payload = {
-        name,
-        size,
-        packaging,
-      }
+      if (!isFormValid) return
+
+      const payload = { name, size, packaging }
 
       if (editing) {
         await api.put(`/categories/${editing.id}`, payload)
@@ -61,6 +77,23 @@ export default function CategoriasPage() {
     } catch {
       toast.error("Erro ao salvar categoria", { position: "bottom-right" })
     }
+  }
+
+  const renderInput = (label: string, value: string, onChange: (v: any) => void, keyName: string) => {
+    const showError = touched[keyName] && validation[keyName]
+
+    return (
+      <div className="grid gap-1">
+        <Label>{label}</Label>
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={() => handleBlur(keyName)}
+          className={showError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+        />
+        {showError && <span className="text-red-500 text-sm">{validation[keyName]}</span>}
+      </div>
+    )
   }
 
   return (
@@ -84,22 +117,16 @@ export default function CategoriasPage() {
             </DialogHeader>
 
             <div className="grid gap-3">
-              <div className="grid gap-1">
-                <Label>Nome da categoria</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
+              {renderInput("Nome da categoria", name, setName, "name")}
+              {renderInput("Tamanho", size, setSize, "size")}
+              {renderInput("Embalagem", packaging, setPackaging, "packaging")}
 
-              <div className="grid gap-1">
-                <Label>Tamanho</Label>
-                <Input value={size} onChange={(e) => setSize(e.target.value)} />
-              </div>
-
-              <div className="grid gap-1">
-                <Label>Embalagem</Label>
-                <Input value={packaging} onChange={(e) => setPackaging(e.target.value)} />
-              </div>
-
-              <Button className="w-full mt-2" onClick={handleSave}>
+              <Button
+                className="w-full mt-2"
+                onClick={handleSave}
+                disabled={!isFormValid}
+                variant={!isFormValid ? "outline" : "default"}
+              >
                 Salvar
               </Button>
             </div>

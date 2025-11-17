@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { ProdutosTable } from "../../components/table/ProdutosTable"
 import { toast } from "sonner"
 import { api } from "@/services/api"
@@ -24,7 +24,6 @@ import { api } from "@/services/api"
 export default function ProdutosPage() {
     const [open, setOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<any>(null)
-
     const [reload, setReload] = useState(0)
 
     const [name, setName] = useState("")
@@ -36,14 +35,12 @@ export default function ProdutosPage() {
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
 
     const [categorias, setCategorias] = useState<any[]>([])
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
 
     useEffect(() => {
         api.get("/categories").then((res) => {
-            if (Array.isArray(res.data.content)) {
-                setCategorias(res.data.content)
-            } else {
-                setCategorias([])
-            }
+            if (Array.isArray(res.data.content)) setCategorias(res.data.content)
+            else setCategorias([])
         })
     }, [])
 
@@ -56,6 +53,7 @@ export default function ProdutosPage() {
         setMaxQuantity("")
         setSelectedCategory(undefined)
         setEditingProduct(null)
+        setTouched({})
     }
 
     const openEditor = (product: any) => {
@@ -68,44 +66,85 @@ export default function ProdutosPage() {
         setMaxQuantity(String(product.maxQuantity))
         setSelectedCategory(String(product.category?.id ?? ""))
         setOpen(true)
+        setTouched({})
     }
+
+    const validation = useMemo(() => {
+        const errors: Record<string, string> = {}
+
+        if (!name.trim()) errors.name = "Nome é obrigatório"
+        if (!unitPrice || isNaN(Number(unitPrice)) || Number(unitPrice) <= 0)
+            errors.unitPrice = "Preço deve ser maior que 0"
+        if (!unitOfMeasure.trim()) errors.unitOfMeasure = "Unidade de medida é obrigatória"
+        if (!availableStock || isNaN(Number(availableStock)) || Number(availableStock) < 0)
+            errors.availableStock = "Estoque deve ser 0 ou maior"
+        if (!minQuantity || isNaN(Number(minQuantity)) || Number(minQuantity) < 0)
+            errors.minQuantity = "Quantidade mínima deve ser 0 ou maior"
+        if (!maxQuantity || isNaN(Number(maxQuantity)) || Number(maxQuantity) <= 0)
+            errors.maxQuantity = "Quantidade máxima deve ser maior que 0"
+        if (!errors.minQuantity && !errors.maxQuantity && Number(minQuantity) > Number(maxQuantity))
+            errors.minQuantity = "Min não pode ser maior que Max"
+        return errors
+    }, [name, unitPrice, unitOfMeasure, availableStock, minQuantity, maxQuantity])
+
+    const isFormValid = useMemo(() => Object.keys(validation).length === 0, [validation])
 
     const handleSave = async () => {
         try {
-            if (editingProduct) {
-                await api.put(`/products/${editingProduct.id}`, {
-                    name,
-                    unitPrice: Number(unitPrice),
-                    unitOfMeasure,
-                    availableStock: Number(availableStock),
-                    minStockQuantity: Number(minQuantity),
-                    maxStockQuantity: Number(maxQuantity),
-                    categoryId: selectedCategory ? Number(selectedCategory) : null,
-                })
+            if (!isFormValid) return
 
+            const payload = {
+                name,
+                unitPrice: Number(unitPrice),
+                unitOfMeasure,
+                availableStock: Number(availableStock),
+                minStockQuantity: Number(minQuantity),
+                maxStockQuantity: Number(maxQuantity),
+                categoryId: selectedCategory ? Number(selectedCategory) : null,
+            }
+
+            if (editingProduct) {
+                await api.put(`/products/${editingProduct.id}`, payload)
                 toast.success("Produto atualizado!", { position: "bottom-right" })
             } else {
-                await api.post("/products", {
-                    name,
-                    unitPrice: Number(unitPrice),
-                    unitOfMeasure,
-                    availableStock: Number(availableStock),
-                    minStockQuantity: Number(minQuantity),
-                    maxStockQuantity: Number(maxQuantity),
-                    categoryId: selectedCategory ? Number(selectedCategory) : null,
-                })
-
+                await api.post("/products", payload)
                 toast.success("Produto criado!", { position: "bottom-right" })
             }
 
             setOpen(false)
             resetForm()
-
             setReload((r) => r + 1)
-
         } catch {
             toast.error("Erro ao salvar produto", { position: "bottom-right" })
         }
+    }
+
+    const handleBlur = (field: string) => {
+        setTouched((prev) => ({ ...prev, [field]: true }))
+    }
+
+    const renderInput = (
+        label: string,
+        value: string,
+        onChange: (v: any) => void,
+        nameKey: string,
+        type: string = "text"
+    ) => {
+        const showError = touched[nameKey] && validation[nameKey]
+
+        return (
+            <div className="grid gap-1">
+                <Label>{label}</Label>
+                <Input
+                    type={type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onBlur={() => handleBlur(nameKey)}
+                    className={showError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                />
+                {showError && <span className="text-red-500 text-sm">{validation[nameKey]}</span>}
+            </div>
+        )
     }
 
     return (
@@ -129,40 +168,25 @@ export default function ProdutosPage() {
                         </DialogHeader>
 
                         <div className="grid gap-3">
-                            <div className="grid gap-1">
-                                <Label>Nome do produto</Label>
-                                <Input value={name} onChange={(e) => setName(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label>Preço unitário</Label>
-                                <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label>Unidade de medida</Label>
-                                <Input value={unitOfMeasure} onChange={(e) => setUnitOfMeasure(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label>Estoque disponível</Label>
-                                <Input type="number" value={availableStock} onChange={(e) => setAvailableStock(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label>Quantidade mínima</Label>
-                                <Input type="number" value={minQuantity} onChange={(e) => setMinQuantity(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label>Quantidade máxima</Label>
-                                <Input type="number" value={maxQuantity} onChange={(e) => setMaxQuantity(e.target.value)} />
-                            </div>
+                            {renderInput("Nome do produto", name, setName, "name")}
+                            {renderInput("Preço unitário", unitPrice, setUnitPrice, "unitPrice", "number")}
+                            {renderInput("Unidade de medida", unitOfMeasure, setUnitOfMeasure, "unitOfMeasure")}
+                            {renderInput("Estoque disponível", availableStock, setAvailableStock, "availableStock", "number")}
+                            {renderInput("Quantidade mínima", minQuantity, setMinQuantity, "minQuantity", "number")}
+                            {renderInput("Quantidade máxima", maxQuantity, setMaxQuantity, "maxQuantity", "number")}
 
                             <div className="grid gap-1">
                                 <Label>Categoria</Label>
                                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger
+                                        onBlur={() => handleBlur("category")}
+                                        className={
+                                            "w-full " +
+                                            (touched.category && validation.category
+                                                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                                : "")
+                                        }
+                                    >
                                         <SelectValue placeholder="Selecione uma categoria" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -173,9 +197,17 @@ export default function ProdutosPage() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {touched.category && validation.category && (
+                                    <span className="text-red-500 text-sm">{validation.category}</span>
+                                )}
                             </div>
 
-                            <Button className="w-full mt-2" onClick={handleSave}>
+                            <Button
+                                className="w-full mt-2"
+                                onClick={handleSave}
+                                disabled={!isFormValid}
+                                variant={!isFormValid ? "outline" : "default"}
+                            >
                                 Salvar
                             </Button>
                         </div>

@@ -17,6 +17,8 @@ import {
   ArrowRight,
   ChevronDown,
   MoreHorizontal,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -57,39 +59,6 @@ import type { Movement } from "../../hooks/useMovimentacoes"
 
 export const columns: ColumnDef<Movement>[] = [
   {
-    accessorKey: "movementType",
-    header: "Tipo de movimentação",
-    cell: ({ row }) => {
-      const type = row.getValue("movementType")
-      return (
-        <span
-          className={`py-1 px-2 rounded-md ${type === "ENTRY"
-            ? "bg-green-200 text-green-800"
-            : "bg-red-200 text-red-800"
-            }`}
-        >
-          {type === "ENTRY" ? "Entrada" : "Saída"}
-        </span>
-      )
-    },
-  },
-
-  {
-    accessorKey: "productName",
-    header: "Produto",
-    cell: ({ row }) => row.original.product.name,
-
-    filterFn: (row, columnId, filterValue) => {
-      const productName = row.original.product?.name?.toLowerCase() ?? ""
-      return productName.includes(filterValue.toLowerCase())
-    },
-  },
-
-  {
-    accessorKey: "quantity",
-    header: "Quantidade",
-  },
-  {
     accessorKey: "movementDate",
     header: "Data",
     cell: ({ row }) => {
@@ -98,7 +67,56 @@ export const columns: ColumnDef<Movement>[] = [
       return date.toLocaleDateString("pt-BR")
     },
   },
+  {
+    accessorKey: "productName",
+    header: "Produto",
+    cell: ({ row }) => row.original.product.name,
+    filterFn: (row, columnId, filterValue) => {
+      const productName = row.original.product?.name?.toLowerCase() ?? ""
+      return productName.includes(filterValue.toLowerCase())
+    },
+  },
+  {
+    accessorKey: "movementType",
+    header: "Tipo de movimentação",
+    cell: ({ row }) => {
+      const type = row.getValue("movementType")
+      return type === "ENTRY" ? (
+        <div className="flex items-center gap-2 text-green-600">
+          <TrendingUp size={16} />
+          Entrada
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-red-600">
+          <TrendingDown size={16} />
+          Saída
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "quantity",
+    header: "Quantidade",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string
+
+      let bgClass = "bg-gray-200 text-gray-800"
+      if (status === "Normal") bgClass = "bg-green-200 text-green-800"
+      else bgClass = "bg-red-200 text-red-800"
+
+      return (
+        <span className={`py-1 px-2 rounded-md ${bgClass}`}>
+          {status}
+        </span>
+      )
+    },
+  }
 ]
+
 
 type Props = {
   data: Movement[]

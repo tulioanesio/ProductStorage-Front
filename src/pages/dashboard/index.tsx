@@ -22,7 +22,6 @@ export default function Dashboard() {
       <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
       <p className="text-gray-500 mb-6">Visão geral do seu estoque</p>
 
-      {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <Card>
           <CardContent className="p-5 flex justify-between items-center">
@@ -82,7 +81,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Atalhos */}
       <h3 className="text-lg font-medium mb-3">Atalhos Rápidos</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
