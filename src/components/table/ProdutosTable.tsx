@@ -17,7 +17,6 @@ import {
   ArrowRight,
   ChevronDown,
   MoreHorizontal,
-  AlertTriangle,
   CircleArrowDown,
   CircleArrowUp,
 } from "lucide-react";
@@ -59,7 +58,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { ProdutoType } from "@/@types/types";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { useProdutos } from "@/pages/produto/useProdutos";
+import { useProdutos } from "@/hooks/useProdutos";
 
 export function ProdutosTable({
   onEdit,

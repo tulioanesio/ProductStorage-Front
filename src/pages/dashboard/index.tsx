@@ -1,44 +1,28 @@
-import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { useDashboard } from "@/hooks/useDashboard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Package,
   AlertTriangle,
   DollarSign,
-  Box,
+  ArrowLeftRight,
   Tags,
   BarChart3,
-  ArrowLeftRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-interface DashboardData {
-  totalProducts: number;
-  lowStockProducts: number;
-  totalStockValue: number;
-}
-
 export default function Dashboard() {
-  const [data, setData] = useState<DashboardData>({
-    totalProducts: 0,
-    lowStockProducts: 0,
-    totalStockValue: 0,
-  });
+  const { data, loading } = useDashboard();
 
-  useEffect(() => {
-    const mockData: DashboardData = {
-      totalProducts: 42,
-      lowStockProducts: 5,
-      totalStockValue: 15750.5,
-    };
-
-    setData(mockData);
-  }, []);
+  if (loading || !data) {
+    return <p className="text-gray-500">Carregando informações...</p>;
+  }
 
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-2">Dashboard</h2>
       <p className="text-gray-500 mb-6">Visão geral do seu estoque</p>
 
+      {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <Card>
           <CardContent className="p-5 flex justify-between items-center">
@@ -55,7 +39,7 @@ export default function Dashboard() {
         <Card>
           <CardContent className="p-5 flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-500">Produtos Abaixo do Limite</p>
+              <p className="text-sm text-gray-500">Abaixo do Limite</p>
               <p className="text-2xl font-semibold mt-1 text-red-500">
                 {data.lowStockProducts}
               </p>
@@ -69,13 +53,13 @@ export default function Dashboard() {
         <Card>
           <CardContent className="p-5 flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-500">Produtos Acima do Limite</p>
-              <p className="text-2xl font-semibold mt-1 text-red-500">
-                {data.lowStockProducts}
+              <p className="text-sm text-gray-500">Acima do Limite</p>
+              <p className="text-2xl font-semibold mt-1 text-orange-500">
+                {data.highStockProducts}
               </p>
             </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <AlertTriangle className="text-red-600" size={28} />
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <AlertTriangle className="text-orange-600" size={28} />
             </div>
           </CardContent>
         </Card>
@@ -98,7 +82,9 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Atalhos */}
       <h3 className="text-lg font-medium mb-3">Atalhos Rápidos</h3>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link to="/produtos">
           <Card className="hover:shadow-md transition cursor-pointer">
@@ -107,7 +93,9 @@ export default function Dashboard() {
                 <Package className="text-blue-600" size={20} />
               </div>
               <CardTitle className="text-base">Produtos</CardTitle>
-              <CardDescription>Gerencie todos os produtos do estoque</CardDescription>
+              <CardDescription>
+                Gerencie todos os produtos do estoque
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
@@ -119,7 +107,9 @@ export default function Dashboard() {
                 <Tags className="text-purple-600" size={20} />
               </div>
               <CardTitle className="text-base">Categorias</CardTitle>
-              <CardDescription>Gerencie todas as categorias dos produtos</CardDescription>
+              <CardDescription>
+                Gerencie todas as categorias
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
@@ -131,7 +121,9 @@ export default function Dashboard() {
                 <ArrowLeftRight className="text-orange-600" size={20} />
               </div>
               <CardTitle className="text-base">Movimentações</CardTitle>
-              <CardDescription>Registrar entradas e saídas de produtos</CardDescription>
+              <CardDescription>
+                Registrar entradas e saídas
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>
@@ -143,7 +135,9 @@ export default function Dashboard() {
                 <BarChart3 className="text-green-600" size={20} />
               </div>
               <CardTitle className="text-base">Relatórios</CardTitle>
-              <CardDescription>Visualize relatórios detalhados</CardDescription>
+              <CardDescription>
+                Visualize dados analíticos
+              </CardDescription>
             </CardHeader>
           </Card>
         </Link>

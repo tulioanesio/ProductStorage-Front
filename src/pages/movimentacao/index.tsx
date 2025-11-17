@@ -13,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/services/api"
-import { MovimentacoesTable } from "./MovimentacoesTable"
-import { useMovimentacoes, type Movement } from "./useMovimentacoes"
-import { InfiniteProductSelect } from "./InfiniteProductSelect"
+import { MovimentacoesTable } from "../../components/table/MovimentacoesTable"
+import { useMovimentacoes, type Movement } from "../../hooks/useMovimentacoes"
+import { InfiniteProductSelect } from "../../components/InfiniteProductSelect"
 
 export default function MovimentacoesPage() {
     const [open, setOpen] = useState(false)

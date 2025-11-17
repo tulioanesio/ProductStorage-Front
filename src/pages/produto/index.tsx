@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
-import { ProdutosTable } from "./ProdutosTable"
+import { ProdutosTable } from "../../components/table/ProdutosTable"
 import { toast } from "sonner"
 import { api } from "@/services/api"
 

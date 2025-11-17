@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/services/api"
-import { CategoriasTable } from "./CategoriasTable"
+import { CategoriasTable } from "../../components/table/CategoriasTable"
 
 export default function CategoriasPage() {
   const [open, setOpen] = useState(false)

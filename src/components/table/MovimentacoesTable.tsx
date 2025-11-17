@@ -53,7 +53,7 @@ import {
 
 import { toast } from "sonner"
 import { api } from "@/services/api"
-import type { Movement } from "./useMovimentacoes"
+import type { Movement } from "../../hooks/useMovimentacoes"
 
 export const columns: ColumnDef<Movement>[] = [
   {
