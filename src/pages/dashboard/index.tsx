@@ -84,62 +84,45 @@ export default function Dashboard() {
       <h3 className="text-lg font-medium mb-3">Atalhos Rápidos</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link to="/produtos">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded">
-                <Package className="text-blue-600" size={20} />
-              </div>
-              <CardTitle className="text-base">Produtos</CardTitle>
-              <CardDescription>
-                Gerencie todos os produtos do estoque
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link to="/categorias">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="w-10 h-10 flex items-center justify-center bg-purple-100 rounded">
-                <Tags className="text-purple-600" size={20} />
-              </div>
-              <CardTitle className="text-base">Categorias</CardTitle>
-              <CardDescription>
-                Gerencie todas as categorias
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link to="/movimentacoes">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="w-10 h-10 flex items-center justify-center bg-orange-100 rounded">
-                <ArrowLeftRight className="text-orange-600" size={20} />
-              </div>
-              <CardTitle className="text-base">Movimentações</CardTitle>
-              <CardDescription>
-                Registrar entradas e saídas
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link to="/relatorios">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded">
-                <BarChart3 className="text-green-600" size={20} />
-              </div>
-              <CardTitle className="text-base">Relatórios</CardTitle>
-              <CardDescription>
-                Visualize dados analíticos
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        {[{
+          to: "/produtos",
+          icon: Package,
+          iconBg: "bg-blue-100 text-blue-600",
+          title: "Produtos",
+          description: "Gerencie todos os produtos do estoque"
+        }, {
+          to: "/categorias",
+          icon: Tags,
+          iconBg: "bg-purple-100 text-purple-600",
+          title: "Categorias",
+          description: "Gerencie todas as categorias"
+        }, {
+          to: "/movimentacoes",
+          icon: ArrowLeftRight,
+          iconBg: "bg-orange-100 text-orange-600",
+          title: "Movimentações",
+          description: "Registrar entradas e saídas"
+        }, {
+          to: "/relatorios",
+          icon: BarChart3,
+          iconBg: "bg-green-100 text-green-600",
+          title: "Relatórios",
+          description: "Visualize dados analíticos"
+        }].map((card) => (
+          <Link key={card.to} to={card.to}>
+            <Card className="hover:shadow-md transition cursor-pointer h-full flex flex-col">
+              <CardHeader className="pb-2">
+                <div className={`w-10 h-10 flex items-center justify-center rounded ${card.iconBg}`}>
+                  <card.icon size={20} />
+                </div>
+                <CardTitle className="text-base">{card.title}</CardTitle>
+                <CardDescription>{card.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        ))}
       </div>
+
     </div>
   );
 }
