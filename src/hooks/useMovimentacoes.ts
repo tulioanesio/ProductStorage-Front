@@ -21,7 +21,12 @@ type MovementsResponse = {
  size: number
 }
 
-export function useMovimentacoes(reload: number, page: number = 0, size: number = 10) {
+export function useMovimentacoes(
+ reload: number,
+ page: number = 0,
+ size: number = 10,
+ nameFilter: string = ""
+) {
  const [data, setData] = useState<Movement[]>([])
  const [totalPages, setTotalPages] = useState(0)
  const [loading, setLoading] = useState(true)
@@ -30,9 +35,8 @@ export function useMovimentacoes(reload: number, page: number = 0, size: number 
   try {
    setLoading(true)
    const res = await api.get<MovementsResponse>("/movements", {
-    params: { page, size },
+    params: { page, size, name: nameFilter },
    })
-
    setData(res.data.content)
    setTotalPages(res.data.totalPages)
   } finally {
@@ -42,7 +46,7 @@ export function useMovimentacoes(reload: number, page: number = 0, size: number 
 
  useEffect(() => {
   load()
- }, [reload, page])
+ }, [reload, page, nameFilter])
 
- return { data, totalPages, loading }
+ return { data, totalPages, loading, refetch: load }
 }

@@ -58,7 +58,7 @@ export function ProdutosTable({ onEdit, reload }: { onEdit?: (p: ProdutoType) =>
   const [nameFilter, setNameFilter] = React.useState("");
 
   const pageSize = 20;
-  const debouncedNameFilter = useDebounce(nameFilter, 400);
+  const debouncedNameFilter = useDebounce(nameFilter, 500);
   const { data, loading, refetch } = useProdutos(page, pageSize, reload, debouncedNameFilter);
 
   React.useEffect(() => {

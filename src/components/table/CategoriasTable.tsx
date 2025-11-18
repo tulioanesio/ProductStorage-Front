@@ -60,7 +60,7 @@ export function CategoriasTable({
   const [categoryToDelete, setCategoryToDelete] = React.useState<any | null>(null);
   const [nameFilter, setNameFilter] = React.useState("");
 
-  const debouncedNameFilter = useDebounce(nameFilter, 300);
+  const debouncedNameFilter = useDebounce(nameFilter, 500);
   const pageSize = 20;
   const { data, loading, refetch } = useCategorias(page, pageSize, reload, debouncedNameFilter);
 

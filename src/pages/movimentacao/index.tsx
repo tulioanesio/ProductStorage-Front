@@ -192,7 +192,7 @@ export default function MovimentacoesPage() {
                 </Dialog>
             </div>
 
-            <MovimentacoesTable data={data} reload={() => setReload(r => r + 1)} onEdit={openEditor} />
+            <MovimentacoesTable reload={reload} onEdit={openEditor} />
         </div>
     )
 }
