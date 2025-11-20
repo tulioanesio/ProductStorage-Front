@@ -68,7 +68,7 @@ export function MovimentacoesTable({
   const [nameFilter, setNameFilter] = React.useState("")
 
   const debouncedNameFilter = useDebounce(nameFilter, 500)
-  const pageSize = 10
+  const pageSize = 20
 
   const { data, totalPages, loading, refetch } = useMovimentacoes(
     reload,
@@ -88,7 +88,7 @@ export function MovimentacoesTable({
       header: "Data",
       cell: ({ row }) => {
         const date = new Date(row.getValue("movementDate") as string)
-        return date.toLocaleDateString("pt-BR")
+        return date.toLocaleDateString("pt-BR", { timeZone: "UTC" })
       },
     },
     {

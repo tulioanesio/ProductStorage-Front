@@ -283,9 +283,6 @@ export default function Relatorio() {
 
               {isPaginated && pageInfo && (
                 <div className="flex items-center justify-end space-x-2 py-4">
-                  <div className="text-sm text-gray-500 mr-4">
-                    Página {pageInfo.number + 1} de {pageInfo.totalPages}
-                  </div>
                   <Button
                     variant="outline"
                     size="sm"
