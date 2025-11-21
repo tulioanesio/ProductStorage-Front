@@ -88,9 +88,16 @@ export function useRelatorios(type: ReportType, page: number = 0, size: number =
                 break;
 
             case "BY_CATEGORY":
-                response = await api.get("/reports/products-by-category");
-                setData(response.data);
-                setPageInfo(null);
+                response = await api.get(`/reports/products-by-category${queryParams}`);
+                setData(response.data.content);
+                setPageInfo({
+                    totalPages: response.data.totalPages,
+                    totalElements: response.data.totalElements,
+                    first: response.data.first,
+                    last: response.data.last,
+                    number: response.data.number,
+                    size: response.data.size
+                });
                 break;
 
             case "MOST_OUTPUT":
