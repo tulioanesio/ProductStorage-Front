@@ -5,9 +5,16 @@ import {
   RefreshCcw,
   BarChart3,
   LayoutDashboard,
+  Boxes,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  onNavigate?: () => void;
+}
+
+export default function Sidebar({ className, onNavigate }: SidebarProps) {
   const location = useLocation();
 
   const menu = [
@@ -19,21 +26,24 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r shadow-sm hidden md:flex flex-col">
+    <aside className={cn("w-64 bg-white border-r shadow-sm flex flex-col h-full", className)}>
       <div className="p-6 border-b">
-        <Link to="/">
+        <Link to="/" className="flex items-center gap-4" onClick={onNavigate}>
+          <Boxes size={48} className="text-blue-600" />
           <h1 className="text-xl font-semibold text-blue-600">Gestor de Estoque</h1>
         </Link>
       </div>
 
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         {menu.map(({ path, label, icon }) => (
-          <Link key={path} to={path}>
+          <Link key={path} to={path} onClick={onNavigate}>
             <button
-              className={`w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg mb-2 transition cursor-pointer ${location.pathname === path
+              className={cn(
+                "w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg mb-2 transition cursor-pointer",
+                location.pathname === path
                   ? "bg-blue-50 text-blue-700 font-medium"
                   : "hover:bg-gray-100 text-gray-700"
-                }`}
+              )}
             >
               {icon}
               {label}

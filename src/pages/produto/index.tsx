@@ -16,19 +16,136 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { ProdutosTable } from "../../components/ProdutosTable"
-
-const categoriasMock = [
-    { id: "1", name: "Refrigerados" },
-    { id: "2", name: "Papelão" },
-    { id: "3", name: "Limpeza" },
-    { id: "4", name: "Bebidas" },
-]
+import { useState, useEffect, useMemo } from "react"
+import { ProdutosTable } from "../../components/table/ProdutosTable"
+import { toast } from "sonner"
+import { api } from "@/services/api"
 
 export default function ProdutosPage() {
     const [open, setOpen] = useState(false)
+    const [editingProduct, setEditingProduct] = useState<any>(null)
+    const [reload, setReload] = useState(0)
+
+    const [name, setName] = useState("")
+    const [unitPrice, setUnitPrice] = useState("")
+    const [unitOfMeasure, setUnitOfMeasure] = useState("")
+    const [availableStock, setAvailableStock] = useState("")
+    const [minQuantity, setMinQuantity] = useState("")
+    const [maxQuantity, setMaxQuantity] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
+
+    const [categorias, setCategorias] = useState<any[]>([])
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+    useEffect(() => {
+        api.get("/categories").then((res) => {
+            if (Array.isArray(res.data.content)) setCategorias(res.data.content)
+            else setCategorias([])
+        })
+    }, [])
+
+    const resetForm = () => {
+        setName("")
+        setUnitPrice("")
+        setUnitOfMeasure("")
+        setAvailableStock("")
+        setMinQuantity("")
+        setMaxQuantity("")
+        setSelectedCategory(undefined)
+        setEditingProduct(null)
+        setTouched({})
+    }
+
+    const openEditor = (product: any) => {
+        setEditingProduct(product)
+        setName(product.name)
+        setUnitPrice(String(product.unitPrice))
+        setUnitOfMeasure(product.unitOfMeasure)
+        setAvailableStock(String(product.availableStock))
+        setMinQuantity(String(product.minQuantity))
+        setMaxQuantity(String(product.maxQuantity))
+        setSelectedCategory(String(product.category?.id ?? ""))
+        setOpen(true)
+        setTouched({})
+    }
+
+    const validation = useMemo(() => {
+        const errors: Record<string, string> = {}
+
+        if (!name.trim()) errors.name = "Nome é obrigatório"
+        if (!unitPrice || isNaN(Number(unitPrice)) || Number(unitPrice) <= 0)
+            errors.unitPrice = "Preço deve ser maior que 0"
+        if (!unitOfMeasure.trim()) errors.unitOfMeasure = "Unidade de medida é obrigatória"
+        if (!availableStock || isNaN(Number(availableStock)) || Number(availableStock) < 0)
+            errors.availableStock = "Estoque deve ser 0 ou maior"
+        if (!minQuantity || isNaN(Number(minQuantity)) || Number(minQuantity) < 0)
+            errors.minQuantity = "Quantidade mínima deve ser 0 ou maior"
+        if (!maxQuantity || isNaN(Number(maxQuantity)) || Number(maxQuantity) <= 0)
+            errors.maxQuantity = "Quantidade máxima deve ser maior que 0"
+        if (!errors.minQuantity && !errors.maxQuantity && Number(minQuantity) > Number(maxQuantity))
+            errors.minQuantity = "Min não pode ser maior que Max"
+        return errors
+    }, [name, unitPrice, unitOfMeasure, availableStock, minQuantity, maxQuantity])
+
+    const isFormValid = useMemo(() => Object.keys(validation).length === 0, [validation])
+
+    const handleSave = async () => {
+        try {
+            if (!isFormValid) return
+
+            const payload = {
+                name,
+                unitPrice: Number(unitPrice),
+                unitOfMeasure,
+                availableStock: Number(availableStock),
+                minStockQuantity: Number(minQuantity),
+                maxStockQuantity: Number(maxQuantity),
+                categoryId: selectedCategory ? Number(selectedCategory) : null,
+            }
+
+            if (editingProduct) {
+                await api.put(`/products/${editingProduct.id}`, payload)
+                toast.success("Produto atualizado!", { position: "bottom-right" })
+            } else {
+                await api.post("/products", payload)
+                toast.success("Produto criado!", { position: "bottom-right" })
+            }
+
+            setOpen(false)
+            resetForm()
+            setReload((r) => r + 1)
+        } catch {
+            toast.error("Erro ao salvar produto", { position: "bottom-right" })
+        }
+    }
+
+    const handleBlur = (field: string) => {
+        setTouched((prev) => ({ ...prev, [field]: true }))
+    }
+
+    const renderInput = (
+        label: string,
+        value: string,
+        onChange: (v: any) => void,
+        nameKey: string,
+        type: string = "text"
+    ) => {
+        const showError = touched[nameKey] && validation[nameKey]
+
+        return (
+            <div className="grid gap-1">
+                <Label>{label}</Label>
+                <Input
+                    type={type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onBlur={() => handleBlur(nameKey)}
+                    className={showError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                />
+                {showError && <span className="text-red-500 text-sm">{validation[nameKey]}</span>}
+            </div>
+        )
+    }
 
     return (
         <div className="w-full">
@@ -40,64 +157,57 @@ export default function ProdutosPage() {
 
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button onClick={resetForm}>
                             <Plus className="mr-2 h-4 w-4" /> Registrar produto
                         </Button>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Novo produto</DialogTitle>
+                            <DialogTitle>{editingProduct ? "Editar produto" : "Novo produto"}</DialogTitle>
                         </DialogHeader>
 
                         <div className="grid gap-3">
-                            <div className="grid gap-1">
-                                <Label htmlFor="product-name">Nome do produto</Label>
-                                <Input id="product-name" placeholder="Nome do produto" />
-                            </div>
+                            {renderInput("Nome do produto", name, setName, "name")}
+                            {renderInput("Preço unitário", unitPrice, setUnitPrice, "unitPrice", "number")}
+                            {renderInput("Unidade de medida", unitOfMeasure, setUnitOfMeasure, "unitOfMeasure")}
+                            {renderInput("Estoque disponível", availableStock, setAvailableStock, "availableStock", "number")}
+                            {renderInput("Quantidade mínima", minQuantity, setMinQuantity, "minQuantity", "number")}
+                            {renderInput("Quantidade máxima", maxQuantity, setMaxQuantity, "maxQuantity", "number")}
 
                             <div className="grid gap-1">
-                                <Label htmlFor="unit-price">Preço unitário</Label>
-                                <Input id="unit-price" type="number" placeholder="Preço unitário" />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label htmlFor="unit-of-measure">Unidade de medida</Label>
-                                <Input id="unit-of-measure" placeholder="Unidade de medida" />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label htmlFor="available-stock">Estoque disponível</Label>
-                                <Input id="available-stock" type="number" placeholder="Estoque disponível" />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label htmlFor="min-qty">Quantidade mínima</Label>
-                                <Input id="min-qty" type="number" placeholder="Quantidade mínima" />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label htmlFor="max-qty">Quantidade máxima</Label>
-                                <Input id="max-qty" type="number" placeholder="Quantidade máxima" />
-                            </div>
-
-                            <div className="grid gap-1">
-                                <Label htmlFor="category-select">Categoria</Label>
-                                <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v)}>
-                                    <SelectTrigger id="category-select" className="w-full">
+                                <Label>Categoria</Label>
+                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                    <SelectTrigger
+                                        onBlur={() => handleBlur("category")}
+                                        className={
+                                            "w-full " +
+                                            (touched.category && validation.category
+                                                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                                : "")
+                                        }
+                                    >
                                         <SelectValue placeholder="Selecione uma categoria" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {categoriasMock.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>
+                                        {categorias.map((c) => (
+                                            <SelectItem key={c.id} value={String(c.id)}>
                                                 {c.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {touched.category && validation.category && (
+                                    <span className="text-red-500 text-sm">{validation.category}</span>
+                                )}
                             </div>
 
-                            <Button className="w-full mt-2" onClick={() => setOpen(false)}>
+                            <Button
+                                className="w-full mt-2"
+                                onClick={handleSave}
+                                disabled={!isFormValid}
+                                variant={!isFormValid ? "outline" : "default"}
+                            >
                                 Salvar
                             </Button>
                         </div>
@@ -105,7 +215,7 @@ export default function ProdutosPage() {
                 </Dialog>
             </div>
 
-            <ProdutosTable />
+            <ProdutosTable onEdit={openEditor} reload={reload} />
         </div>
     )
 }

@@ -5,8 +5,8 @@ import Dashboard from "./pages/dashboard";
 import Produto from "./pages/produto";
 import Relatorio from "./pages/relatorio";
 import MainLayout from "./layouts/MainLayout";
-import { CategoriaPage } from "./pages/categoria";
-import { MovementPage } from "./pages/movimentacao";
+import CategoriasPage from "./pages/categoria";
+import MovimentacoesPage from "./pages/movimentacao";
 
 function App() {
   return (
@@ -15,8 +15,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/produtos" element={<Produto />} />
-          <Route path="/categorias" element={<CategoriaPage />} />
-          <Route path="/movimentacoes" element={<MovementPage />} />
+          <Route path="/categorias" element={<CategoriasPage />} />
+          <Route path="/movimentacoes" element={<MovimentacoesPage />} />
           <Route path="/relatorios" element={<Relatorio />} />
         </Route>
       </Routes>

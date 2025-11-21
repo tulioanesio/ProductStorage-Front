@@ -1,247 +1,140 @@
-import * as React from "react"
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-  type VisibilityState,
-} from "@tanstack/react-table"
-import { ArrowLeft, ArrowRight, ChevronDown, MoreHorizontal, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { useState, useMemo } from "react"
+import { toast } from "sonner"
+import { api } from "@/services/api"
+import { CategoriasTable } from "../../components/table/CategoriasTable"
 
-type Payment = {
-  id: string
-  name: string
-  size: string
-  packaging: string
-}
+export default function CategoriasPage() {
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<any>(null)
+  const [reload, setReload] = useState(0)
 
-const data: Payment[] = [
-  { id: "1", name: "Refrigerados", size: "Grande", packaging: "Caixa" },
-  { id: "2", name: "Papelão", size: "Pequeno", packaging: "Caixa" },
-  { id: "3", name: "Teste", size: "Médio", packaging: "Médio" },
-  { id: "4", name: "Teste 2", size: "Grande", packaging: "Caixa" },
-  { id: "5", name: "Teste 3", size: "Pequeno", packaging: "Caixa" },
-]
+  const [name, setName] = useState("")
+  const [size, setSize] = useState("")
+  const [packaging, setPackaging] = useState("")
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
 
-export const columns: ColumnDef<Payment>[] = [
-  {
-    accessorKey: "name",
-    header: "Nome",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
-  },
-  {
-    accessorKey: "size",
-    header: "Tamanho",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("size")}</div>,
-  },
-  {
-    accessorKey: "packaging",
-    header: "Embalagem",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("packaging")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(payment.id)}>
-              Copiar ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Editar categoria</DropdownMenuItem>
-            <DropdownMenuItem>Excluir categoria</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+  const resetForm = () => {
+    setName("")
+    setSize("")
+    setPackaging("")
+    setEditing(null)
+    setTouched({})
+  }
 
-export function CategoriaPage() {
-  const [open, setOpen] = React.useState(false)
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const openEditor = (cat: any) => {
+    setEditing(cat)
+    setName(cat?.name ?? "")
+    setSize(cat?.size ?? "")
+    setPackaging(cat?.packaging ?? "")
+    setOpen(true)
+    setTouched({})
+  }
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    state: { sorting, columnFilters, columnVisibility },
-  })
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+  }
+
+  const validation = useMemo(() => {
+    const errors: Record<string, string> = {}
+
+    if (!name.trim()) errors.name = "Nome da categoria é obrigatório"
+    if (!size.trim()) errors.size = "Tamanho é obrigatório"
+    if (!packaging.trim()) errors.packaging = "Embalagem é obrigatória"
+
+    return errors
+  }, [name, size, packaging])
+
+  const isFormValid = useMemo(() => Object.keys(validation).length === 0, [validation])
+
+  const handleSave = async () => {
+    try {
+      if (!isFormValid) return
+
+      const payload = { name, size, packaging }
+
+      if (editing) {
+        await api.put(`/categories/${editing.id}`, payload)
+        toast.success("Categoria atualizada!", { position: "bottom-right" })
+      } else {
+        await api.post("/categories", payload)
+        toast.success("Categoria criada!", { position: "bottom-right" })
+      }
+
+      resetForm()
+      setOpen(false)
+      setReload((r) => r + 1)
+    } catch {
+      toast.error("Erro ao salvar categoria", { position: "bottom-right" })
+    }
+  }
+
+  const renderInput = (label: string, value: string, onChange: (v: any) => void, keyName: string) => {
+    const showError = touched[keyName] && validation[keyName]
+
+    return (
+      <div className="grid gap-1">
+        <Label>{label}</Label>
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={() => handleBlur(keyName)}
+          className={showError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+        />
+        {showError && <span className="text-red-500 text-sm">{validation[keyName]}</span>}
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-semibold mb-1">Categorias</h2>
-          <p className="text-gray-500">Gerencie todas as categorias do estoque</p>
+          <p className="text-gray-500">Gerencie as categorias de produto</p>
         </div>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={resetForm}>
               <Plus className="mr-2 h-4 w-4" /> Registrar categoria
             </Button>
           </DialogTrigger>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nova categoria</DialogTitle>
+              <DialogTitle>{editing ? "Editar categoria" : "Nova categoria"}</DialogTitle>
             </DialogHeader>
 
             <div className="grid gap-3">
-              <div className="grid gap-1">
-                <Label htmlFor="category-name">Nome da categoria</Label>
-                <Input id="category-name" placeholder="Nome da categoria" />
-              </div>
+              {renderInput("Nome da categoria", name, setName, "name")}
+              {renderInput("Tamanho", size, setSize, "size")}
+              {renderInput("Embalagem", packaging, setPackaging, "packaging")}
 
-              <div className="grid gap-1">
-                <Label htmlFor="category-size">Tamanho</Label>
-                <Input id="category-size" placeholder="Tamanho" />
-              </div>
-
-              <div className="grid gap-1">
-                <Label htmlFor="category-packaging">Embalagem</Label>
-                <Input id="category-packaging" placeholder="Embalagem" />
-              </div>
-
-              <Button onClick={() => setOpen(false)}>Salvar</Button>
+              <Button
+                className="w-full mt-2"
+                onClick={handleSave}
+                disabled={!isFormValid}
+                variant={!isFormValid ? "outline" : "default"}
+              >
+                Salvar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Buscar por nome das categorias..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
-          className="max-w-sm"
-        />
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Exibição das colunas <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nenhuma categoria encontrada.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <ArrowLeft size={24} /> Anterior
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <ArrowRight size={24} /> Próxima
-        </Button>
-      </div>
+      <CategoriasTable reload={reload} onEdit={openEditor} />
     </div>
   )
 }
