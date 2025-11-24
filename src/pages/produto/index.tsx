@@ -33,6 +33,7 @@ export default function ProdutosPage() {
     const [minQuantity, setMinQuantity] = useState("")
     const [maxQuantity, setMaxQuantity] = useState("")
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
+    const [priceAdjustment, setPriceAdjustment] = useState("")
 
     const [categorias, setCategorias] = useState<any[]>([])
     const [touched, setTouched] = useState<Record<string, boolean>>({})
@@ -54,12 +55,35 @@ export default function ProdutosPage() {
         setSelectedCategory(undefined)
         setEditingProduct(null)
         setTouched({})
+        setPriceAdjustment("")
+    }
+
+    const parseBRValue = (value: string) => {
+        if (!value) return NaN
+        const only = value.replace(/[^\d.,]/g, "")
+        const lastComma = only.lastIndexOf(",")
+        const lastDot = only.lastIndexOf(".")
+        if (lastComma === -1 && lastDot === -1) return Number(only)
+        let decimalSep = ","
+        if (lastDot > lastComma) decimalSep = "."
+        let normalized = only
+        const regex = decimalSep === "," ? /\./g : /,/g
+        normalized = normalized.replace(regex, "")
+        normalized = normalized.replace(decimalSep, ".")
+        return Number(normalized)
+    }
+
+    const formatBRLShort = (value: number) => {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })
     }
 
     const openEditor = (product: any) => {
         setEditingProduct(product)
         setName(product.name)
-        setUnitPrice(String(product.unitPrice))
+        setUnitPrice(formatBRLShort(product.unitPrice))
         setUnitOfMeasure(product.unitOfMeasure)
         setAvailableStock(String(product.availableStock))
         setMinQuantity(String(product.minQuantity))
@@ -67,14 +91,15 @@ export default function ProdutosPage() {
         setSelectedCategory(String(product.category?.id ?? ""))
         setOpen(true)
         setTouched({})
+        setPriceAdjustment("")
     }
 
     const validation = useMemo(() => {
         const errors: Record<string, string> = {}
+        const parsedPrice = parseBRValue(unitPrice)
 
         if (!name.trim()) errors.name = "Nome é obrigatório"
-        if (!unitPrice || isNaN(Number(unitPrice)) || Number(unitPrice) <= 0)
-            errors.unitPrice = "Preço deve ser maior que 0"
+        if (!parsedPrice || isNaN(parsedPrice) || parsedPrice <= 0) errors.unitPrice = "Preço deve ser maior que 0"
         if (!unitOfMeasure.trim()) errors.unitOfMeasure = "Unidade de medida é obrigatória"
         if (!availableStock || isNaN(Number(availableStock)) || Number(availableStock) < 0)
             errors.availableStock = "Estoque deve ser 0 ou maior"
@@ -82,20 +107,37 @@ export default function ProdutosPage() {
             errors.minQuantity = "Quantidade mínima deve ser 0 ou maior"
         if (!maxQuantity || isNaN(Number(maxQuantity)) || Number(maxQuantity) <= 0)
             errors.maxQuantity = "Quantidade máxima deve ser maior que 0"
-        if (!errors.minQuantity && !errors.maxQuantity && Number(minQuantity) > Number(maxQuantity))
+
+        const minParsed = Number(minQuantity)
+        const maxParsed = Number(maxQuantity)
+        if (!errors.minQuantity && !errors.maxQuantity && minParsed > maxParsed)
             errors.minQuantity = "Min não pode ser maior que Max"
+
         return errors
     }, [name, unitPrice, unitOfMeasure, availableStock, minQuantity, maxQuantity])
 
     const isFormValid = useMemo(() => Object.keys(validation).length === 0, [validation])
 
+    const applyPriceAdjustment = () => {
+        if (!priceAdjustment.trim()) return null
+        const base = parseBRValue(unitPrice)
+        const raw = priceAdjustment.trim().replace("%", "").replace(",", ".")
+        const parsed = parseFloat(raw)
+        if (isNaN(parsed)) return null
+        return base + base * (parsed / 100)
+    }
+
     const handleSave = async () => {
         try {
             if (!isFormValid) return
 
+            let finalPrice = parseBRValue(unitPrice)
+            const adjusted = applyPriceAdjustment()
+            if (adjusted !== null) finalPrice = adjusted
+
             const payload = {
                 name,
-                unitPrice: Number(unitPrice),
+                unitPrice: Number(finalPrice.toFixed(2)),
                 unitOfMeasure,
                 availableStock: Number(availableStock),
                 minStockQuantity: Number(minQuantity),
@@ -147,6 +189,8 @@ export default function ProdutosPage() {
         )
     }
 
+    const newPrice = applyPriceAdjustment()
+
     return (
         <div className="w-full">
             <div className="flex justify-between items-center mb-4">
@@ -169,7 +213,42 @@ export default function ProdutosPage() {
 
                         <div className="grid gap-3">
                             {renderInput("Nome do produto", name, setName, "name")}
-                            {renderInput("Preço unitário", unitPrice, setUnitPrice, "unitPrice", "number")}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-1">
+                                    <Label>Preço unitário</Label>
+                                    <Input
+                                        value={unitPrice}
+                                        onChange={(e) => setUnitPrice(e.target.value)}
+                                        onBlur={() => handleBlur("unitPrice")}
+                                        className={
+                                            touched.unitPrice && validation.unitPrice
+                                                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                                : ""
+                                        }
+                                    />
+                                    {touched.unitPrice && validation.unitPrice && (
+                                        <span className="text-red-500 text-sm">{validation.unitPrice}</span>
+                                    )}
+                                </div>
+
+                                <div className="grid gap-1">
+                                    <Label>Ajuste (%)</Label>
+                                    <Input
+                                        value={priceAdjustment}
+                                        onChange={(e) => setPriceAdjustment(e.target.value)}
+                                        placeholder="+10 ou -12,5"
+                                    />
+                                </div>
+                            </div>
+
+                            {newPrice !== null && !isNaN(newPrice) && (
+                                <div className="text-sm mt-1 text-gray-700">
+                                    Preço atual: <b>R$ {formatBRLShort(parseBRValue(unitPrice))}</b> → Novo preço:{" "}
+                                    <b>R$ {formatBRLShort(newPrice)}</b>
+                                </div>
+                            )}
+
                             {renderInput("Unidade de medida", unitOfMeasure, setUnitOfMeasure, "unitOfMeasure")}
                             {renderInput("Estoque disponível", availableStock, setAvailableStock, "availableStock", "number")}
                             {renderInput("Quantidade mínima", minQuantity, setMinQuantity, "minQuantity", "number")}
@@ -181,10 +260,9 @@ export default function ProdutosPage() {
                                     <SelectTrigger
                                         onBlur={() => handleBlur("category")}
                                         className={
-                                            "w-full " +
-                                            (touched.category && validation.category
+                                            touched.category && validation.category
                                                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                                                : "")
+                                                : ""
                                         }
                                     >
                                         <SelectValue placeholder="Selecione uma categoria" />
