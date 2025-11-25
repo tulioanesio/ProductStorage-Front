@@ -1,10 +1,11 @@
 # Product Storage Frontend
 
-[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4.svg)](https://tailwindcss.com/)
-[![shadcn/ui](https://img.shields.io/badge/shadcn/ui-latest-black.svg)](https://ui.shadcn.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg?&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg?&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF.svg?&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4.svg?&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Shadcn/UI](https://img.shields.io/badge/shadcn%2Fui-latest-000000.svg?&logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
+[![License](https://img.shields.io/github/license/tulioanesio/ProductStorage-Front?)](LICENSE)
 
 ## Overview
 
@@ -13,6 +14,8 @@ The **Product Storage** system is an application designed to manage the inventor
 The backend for this application is available at: [ProductStorage-Back](https://github.com/tulioanesio/ProductStorage-Back.git)
 
 It provides a user interface for full CRUD operations for products, categories, stock movements and reports, helping businesses maintain accurate stock levels and plan purchases effectively.
+
+<img width="1918" height="943" alt="image" src="https://github.com/user-attachments/assets/a04ec170-7ab5-4364-bd21-55175e4a8e6e" />
 
 ---
 
