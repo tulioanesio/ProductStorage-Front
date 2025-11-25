@@ -30,8 +30,6 @@ export default function MovimentacoesPage() {
     const [movementDate, setMovementDate] = useState("")
     const [touched, setTouched] = useState<Record<string, boolean>>({})
 
-    const { data } = useMovimentacoes(reload)
-
     const resetForm = () => {
         setProductId("")
         setQuantity("")
