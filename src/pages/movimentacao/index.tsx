@@ -16,7 +16,7 @@ import { useState, useMemo } from "react"
 import { toast } from "sonner"
 import { api } from "@/services/api"
 import { MovimentacoesTable } from "../../components/table/MovimentacoesTable"
-import { useMovimentacoes, type Movement } from "../../hooks/useMovimentacoes"
+import { type Movement } from "../../hooks/useMovimentacoes"
 import { InfiniteProductSelect } from "../../components/InfiniteProductSelect"
 
 export default function MovimentacoesPage() {
