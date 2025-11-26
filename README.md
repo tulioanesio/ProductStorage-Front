@@ -47,7 +47,7 @@ It provides a user interface for full CRUD operations for products, categories, 
 
 ## Technologies
 
-- **React 18**
+- **React 19**
 - **TypeScript**
 - **Vite**
 - **Axios**
@@ -61,7 +61,7 @@ It provides a user interface for full CRUD operations for products, categories, 
 
 ### Requirements
 - Node.js
-- npm (or yarn/pnpm)
+- pnpm (or yarn/npm)
 - A running instance of the [backend API](https://github.com/tulioanesio/ProductStorage-Back.git) (must be accessible at `http://localhost:8080`)
 
 ### Steps
@@ -74,7 +74,7 @@ It provides a user interface for full CRUD operations for products, categories, 
 2. Install dependencies:
 
    ```bash
-   npm install
+   pnpm install
 
    Create a .env.local file in the root directory. This step is optional if the API is running on http://localhost:8080, but good practice.
 
@@ -85,7 +85,7 @@ It provides a user interface for full CRUD operations for products, categories, 
 3. Start the development server:
 
    ```bash
-   npm run dev
+   pnpm run dev
 
    Open your browser and navigate to the local URL provided in the console (usually http://localhost:5173).
    ```
